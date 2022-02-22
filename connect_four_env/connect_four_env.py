@@ -2,8 +2,13 @@ import gym
 from gym import spaces
 import numpy as np
 from typing import List, Tuple
+import matplotlib.pyplot as plt
 
 class ConnectFourGymEnv(gym.Env):
+    PLAYER1 = 1
+    PLAYER2 = -1
+
+
     def __init__(self, board_size:Tuple[int]=(7, 6)):
         super(ConnectFourGymEnv, self).__init__()
         
@@ -78,6 +83,22 @@ class ConnectFourGymEnv(gym.Env):
         # Reset the state of the environment to an initial state
         self.board = np.zeros_like(self.board)
     
-    def render(self, mode='human', close=False):
-        # Render the environment to the screen
-        pass
+    def render(self, mode='human', close=False, figsize=(10.5, 9), slot_size=3000):
+        """Render the environment to the screen"""
+        plt.figure(figsize=figsize, facecolor='blue')
+
+        row, col = np.indices(self.board.shape)
+        for slot_value, color in [
+            (self.PLAYER1, "yellow"), 
+            (self.PLAYER2, "red"), 
+            (0, "grey")
+        ]:
+            x= col[self.board == slot_value].flatten()
+            y = row[self.board == slot_value].flatten()
+            plt.scatter(x, y, c=color, s=slot_size)
+
+        plt.xlim(-.5, self.board.shape[1]-.5)
+        plt.ylim(-.5, self.board.shape[0]-.5)
+        plt.axis("off")
+
+        plt.show()
