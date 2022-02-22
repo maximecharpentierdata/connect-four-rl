@@ -102,3 +102,4 @@ class ConnectFourGymEnv(gym.Env):
         plt.axis("off")
 
         plt.show()
+        
