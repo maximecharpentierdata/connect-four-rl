@@ -1,5 +1,5 @@
 # connect-four-rl
-Reinforcement Learning for Mario Bros
+Reinforcement Learning for Connect Four
 
 ## Environement setup
 
