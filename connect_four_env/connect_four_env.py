@@ -9,7 +9,7 @@ class ConnectFourGymEnv(gym.Env):
     PLAYER2 = -1
 
 
-    def __init__(self, board_size:Tuple[int]=(7, 6)):
+    def __init__(self, board_size:Tuple[int]=(6, 7)):
         super(ConnectFourGymEnv, self).__init__()
         
         self.board = np.zeros(board_size)
@@ -33,19 +33,25 @@ class ConnectFourGymEnv(gym.Env):
         self.board[row, column] = player_value
         return row
 
+    def _check_row(self, row: int) -> bool:
+        return row < 0 or row >= self.board.shape[0]
+    
+    def _check_column(self, column: int) -> bool:
+        return column < 0 or column >= self.board.shape[1]
+
     def _check_direction(self, row: int, column: int, direction: Tuple[int, int]) -> bool:
-        total = 1
-        i=1
+        total = -1
+        i = 0
         while self.board[row + i * direction[0], column + i * direction[1]] == self.board[row, column]:
             total += 1
             i += 1
-            if row + i * direction[0] >= self.board.shape[0] or column + i * direction[1] >= self.board.shape[1]:
+            if self._check_row(row + i * direction[0]) or self._check_column(column + i * direction[1]):
                 break
-        i = -1
+        i = 0
         while self.board[row + i * direction[0], column + i * direction[1]] == self.board[row, column]:
             total += 1
             i -= 1
-            if row + i * direction[0] < 0 or column + i * direction[1] < 0:
+            if self._check_row(row + i * direction[0]) or self._check_column(column + i * direction[1]):
                 break
         return total >= 4
 
@@ -59,6 +65,9 @@ class ConnectFourGymEnv(gym.Env):
 
     def step(self, action:Tuple[int, int]):
         # Execute one time step within the environment
+
+        reward = (0, 0)
+
         player_value = -1
         column = action[0]
         row = self._take_action(player_value, column)
@@ -93,7 +102,7 @@ class ConnectFourGymEnv(gym.Env):
             (self.PLAYER2, "red"), 
             (0, "grey")
         ]:
-            x= col[self.board == slot_value].flatten()
+            x = col[self.board == slot_value].flatten()
             y = row[self.board == slot_value].flatten()
             plt.scatter(x, y, c=color, s=slot_size)
 
