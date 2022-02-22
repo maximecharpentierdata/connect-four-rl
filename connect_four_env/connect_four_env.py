@@ -122,7 +122,7 @@ class ConnectFourGymEnv(gym.Env):
         """This is designed to be used in a notebook, be careful"""
         interact(
             lambda turn: self.render_board(self.history[turn]), 
-            idx=widgets.IntSlider(min=0, turn=len(self.history)-1, step=1, value=0)
+            turn=widgets.IntSlider(min=0, max=len(self.history)-1, step=1, value=0)
         )
         
         
