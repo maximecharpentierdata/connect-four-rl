@@ -19,7 +19,7 @@ class ConnectFourGymEnv(gym.Env):
         
         self.action_space = spaces.MultiDiscrete(board_size)
         
-        self.observation_space = spaces.MultiDiscrete([3] *  7 * 6)
+        self.observation_space = spaces.MultiDiscrete([3] *  board_size[0] * board_size[1])
 
         self.history = []
 
@@ -95,7 +95,7 @@ class ConnectFourGymEnv(gym.Env):
         # Reset the state of the environment to an initial state
         self.board = np.zeros_like(self.board)
     
-    def render(self, mode='human', close=False, figsize=(10.5, 9), slot_size=3000):
+    def render(self, mode='human', figsize=(10.5, 9), slot_size=3000):
         """Render the environment to the screen"""
         self.render_board(self.board, figsize, slot_size)
 
