@@ -1,0 +1,6 @@
+cloudpickle==2.0.0
+gym==0.22.0
+gym-notices==0.0.4
+importlib-metadata==4.11.1
+numpy==1.22.2
+zipp==3.7.0
