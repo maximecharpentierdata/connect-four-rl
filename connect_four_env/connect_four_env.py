@@ -24,7 +24,7 @@ class ConnectFourGymEnv(gym.Env):
         row = 0
         while self.board[row, column] != 0:
             row += 1
-            if row > self.board.shape[1]:
+            if row >= self.board.shape[1]:
                 raise ValueError(f"{column} is already full")
         return row
 
