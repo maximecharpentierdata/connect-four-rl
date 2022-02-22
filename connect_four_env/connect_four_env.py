@@ -3,10 +3,11 @@ from gym import spaces
 import numpy as np
 from typing import List, Tuple
 import matplotlib.pyplot as plt
+from ipywidgets import interact, widgets
 
 class ConnectFourGymEnv(gym.Env):
-    PLAYER1 = 1
-    PLAYER2 = -1
+    PLAYER1 = -1
+    PLAYER2 = 1
 
 
     def __init__(self, board_size:Tuple[int]=(6, 7)):
@@ -16,9 +17,11 @@ class ConnectFourGymEnv(gym.Env):
 
         self.reward_range = (0, 1)
         
-        self.action_space = spaces.MultiDiscrete([7, 7])
+        self.action_space = spaces.MultiDiscrete(board_size)
         
         self.observation_space = spaces.MultiDiscrete([3] *  7 * 6)
+
+        self.history = []
 
     def _get_fall_row(self, column: int) -> int:
         row = 0
@@ -63,28 +66,29 @@ class ConnectFourGymEnv(gym.Env):
                 return True
         return False
 
-    def step(self, action:Tuple[int, int]):
+    def step(self, action:Tuple[int, int], keep_history=False):
         # Execute one time step within the environment
 
         reward = (0, 0)
 
-        player_value = -1
         column = action[0]
-        row = self._take_action(player_value, column)
+        row = self._take_action(self.PLAYER1, column)
         done = False
         if self._game_over(row, column):
             done = True
             reward = (1, -1)
 
         if not done:
-            player_value = 1
             column = action[1]
-            row = self._take_action(player_value, column)
+            row = self._take_action(self.PLAYER2, column)
             done = False
             if self._game_over(row, column):
                 done = True
                 reward = (-1, 1)
         
+        if keep_history:
+            self.history.append(self.board.copy())
+
         return self.board, reward, done, {}
             
         
@@ -94,21 +98,31 @@ class ConnectFourGymEnv(gym.Env):
     
     def render(self, mode='human', close=False, figsize=(10.5, 9), slot_size=3000):
         """Render the environment to the screen"""
+        self.render_board(self.board, figsize, slot_size)
+
+    def render_board(self, board, figsize=(10.5, 9), slot_size=3000):
         plt.figure(figsize=figsize, facecolor='blue')
 
-        row, col = np.indices(self.board.shape)
+        row, col = np.indices(board.shape)
         for slot_value, color in [
             (self.PLAYER1, "yellow"), 
             (self.PLAYER2, "red"), 
             (0, "grey")
         ]:
-            x = col[self.board == slot_value].flatten()
-            y = row[self.board == slot_value].flatten()
+            x = col[board == slot_value].flatten()
+            y = row[board == slot_value].flatten()
             plt.scatter(x, y, c=color, s=slot_size)
 
-        plt.xlim(-.5, self.board.shape[1]-.5)
-        plt.ylim(-.5, self.board.shape[0]-.5)
+        plt.xlim(-.5, board.shape[1]-.5)
+        plt.ylim(-.5, board.shape[0]-.5)
         plt.axis("off")
-
         plt.show()
+        
+    def render_history(self):
+        """This is designed to be used in a notebook, be careful"""
+        interact(
+            lambda turn: self.render_board(self.history[turn]), 
+            idx=widgets.IntSlider(min=0, turn=len(self.history)-1, step=1, value=0)
+        )
+        
         
