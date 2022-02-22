@@ -31,9 +31,11 @@ class ConnectFourGymEnv(gym.Env):
                 raise ValueError(f"{column} is already full")
         return row
 
-    def _take_action(self, player_value: int, column: int) -> int:
+    def _take_action(self, player_value: int, column: int, keep_history: bool) -> int:
         row = self._get_fall_row(column)
         self.board[row, column] = player_value
+        if keep_history:
+            self.history.append(self.board.copy())
         return row
 
     def _check_row(self, row: int) -> bool:
@@ -72,7 +74,7 @@ class ConnectFourGymEnv(gym.Env):
         reward = (0, 0)
 
         column = action[0]
-        row = self._take_action(self.PLAYER1, column)
+        row = self._take_action(self.PLAYER1, column, keep_history)
         done = False
         if self._game_over(row, column):
             done = True
@@ -80,14 +82,11 @@ class ConnectFourGymEnv(gym.Env):
 
         if not done:
             column = action[1]
-            row = self._take_action(self.PLAYER2, column)
+            row = self._take_action(self.PLAYER2, column, keep_history)
             done = False
             if self._game_over(row, column):
                 done = True
                 reward = (-1, 1)
-        
-        if keep_history:
-            self.history.append(self.board.copy())
 
         return self.board, reward, done, {}
             
