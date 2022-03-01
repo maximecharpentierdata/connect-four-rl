@@ -169,12 +169,19 @@ class ConnectFourGymEnv(gym.Env):
         plt.axis("off")
         plt.show()
 
-    def render_history(self):
+    def render_history(self, playback_speed=500):
         """This is designed to be used in a notebook, be careful"""
 
-        play = widgets.Play(value=0, min=0, max=len(self.history) - 1, step=1, interval=500, disabled=False)
+        play = widgets.Play(
+            value=0,
+            min=0,
+            max=len(self.history) - 1,
+            step=1,
+            interval=playback_speed,
+            disabled=False,
+        )
         slider = widgets.IntSlider(min=0, max=len(self.history) - 1, step=1, value=0)
-        widgets.jslink((play, 'value'), (slider, 'value'))
+        widgets.jslink((play, "value"), (slider, "value"))
         hbox = widgets.HBox([play, slider])
         output = widgets.interactive_output(
             lambda turn: self._render_board(self.history[turn]),
