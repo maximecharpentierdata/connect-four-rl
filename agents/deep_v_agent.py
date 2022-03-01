@@ -51,7 +51,11 @@ class DeepVAgent(Agent):
         actions, next_states = ConnectFourGymEnv.get_next_actions_states(
             state, self.player_number
         )
-        next_states_values = self.value_network(np.array(next_states))
+        # This is necessary because the agent has to learn with him having one number
+        # in order to be able to know which tokens are his and which are his opponent's
+        next_states = self.player_number * np.array(next_states) 
+
+        next_states_values = self.value_network(next_states)
 
         q_values = dict(zip(actions, next_states_values))
 
@@ -67,12 +71,16 @@ class DeepVAgent(Agent):
 
         return action
 
-    def learn_from_episode(self, states: List[np.ndarray], gains: List[float]):
+    def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
+
+        # see comment in self.get_move()
+        states = self.player_number * np.array(states) 
+
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(self.value_network(states), gains)
+        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
         criterion.backward()
         self.optimizer.step()
 
-        return criterion.item
+        return criterion.item()
