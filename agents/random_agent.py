@@ -15,12 +15,12 @@ class RandomAgent(Agent):
 
     def get_move(self, state: np.ndarray) -> int:
 
-        actions_states = ConnectFourGymEnv.get_next_actions_states(
+        actions, next_states = ConnectFourGymEnv.get_next_actions_states(
             state, self.player_number
         )
 
-        random_action = np.random.randint(0, len(actions_states))
-        return actions_states[random_action][0]
+        random_action = np.random.randint(0, len(actions))
+        return actions[random_action]
 
     def learn_from_episode(self, states: List[np.ndarray], gains: List[float]):
         pass

@@ -10,7 +10,8 @@ def run_episode(
     agent_1: Agent,
     agent_2: Agent,
     env: ConnectFourGymEnv,
-    keep_states=False,
+    keep_states: bool = False,
+    keep_history: bool = False
 ) -> Union[None, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]]]]:
 
     state = env.reset()
@@ -32,7 +33,7 @@ def run_episode(
 
         action = agent.get_move(state)
         state, reward, done, _ = env.step(
-            (agent.player_number, action), keep_history=True
+            (agent.player_number, action), keep_history
         )
 
         if keep_states:
@@ -53,28 +54,26 @@ def run_episode(
 
 def run_episode_against_self(
     agent: Agent, env: ConnectFourGymEnv, keep_history: bool = False
-):
+) -> Tuple[List[np.ndarray], List[np.ndarray], List[int], List[int]]:
+    """Makes the agent play against itself
+    Returns player1_states, player2_states, player1_rewards, player2_rewards
+    The state lists give the board that the player saw at its turn"""
     state = env.reset()
-    done = False
-    states = []
-    rewards = []
-    opponent_rewards = []
-    opponent_reward = None
-    opponent_turn = False
+    done, opponent_turn = False, False
+    states, rewards = [], []
+    players = [env.PLAYER1, env.PLAYER2]
     while not done:
-        state = -state if opponent_turn else state
-        player_number = [env.PLAYER2, env.PLAYER1][opponent_turn]
+        player_number = players[opponent_turn]
+        agent.player_number = player_number
         action_number = agent.get_move(state)
 
         state, reward, done, _ = env.step((player_number, action_number), keep_history)
 
-        rewards_to_update = [opponent_rewards, rewards][opponent_turn]
-        rewards_to_update.append(reward)
+        rewards.append(reward)
         states.append(state)
         opponent_turn = not opponent_turn
 
-    before_last_player = [env.PLAYER2, env.PLAYER1][opponent_turn]
-    rewards_to_update = [opponent_rewards, rewards][opponent_turn]
-    rewards_to_update[-1] = env.get_final_reward(before_last_player)
+    before_last_player = players[opponent_turn]
+    rewards[-2] = env.get_final_reward(before_last_player)
 
-    return states, rewards, opponent_rewards
+    return states[::2], states[1::2], rewards[::2], rewards[1::2]
