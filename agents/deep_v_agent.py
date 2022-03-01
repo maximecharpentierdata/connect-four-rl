@@ -9,9 +9,9 @@ from connect_four_env.connect_four_env import ConnectFourGymEnv
 
 
 class ValueNetwork(nn.Module):
-    def __init__(self, grid_size: Tuple[int], n_channels: int, kernel_size: int = 4):
+    def __init__(self, board_size: Tuple[int], n_channels: int, kernel_size: int = 4):
         super(ValueNetwork, self).__init__()
-        conved_size = np.prod(grid_size - (kernel_size - 1) * np.ones(2, np.int))
+        conved_size = np.prod(board_size - (kernel_size - 1) * np.ones(2, np.int))
         self.layers = nn.Sequential(
             nn.Conv2d(1, n_channels, 4, dtype=torch.float64),
             nn.ReLU(),
