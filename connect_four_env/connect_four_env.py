@@ -8,7 +8,10 @@ from ipywidgets import interact, widgets
 class ConnectFourGymEnv(gym.Env):
     PLAYER1 = -1
     PLAYER2 = 1
-
+    
+    LOSER_REWARD = -1
+    WINNER_REWARD = 1
+    IDLE_REWARD = 0
 
     def __init__(self, board_size:Tuple[int]=(6, 7)):
         super(ConnectFourGymEnv, self).__init__()
@@ -17,8 +20,8 @@ class ConnectFourGymEnv(gym.Env):
 
         self.reward_range = (0, 1)
         
-        self.action_space = spaces.MultiDiscrete(board_size)
-        
+        self.action_space = spaces.MultiDiscrete((2 * [board_size[1]]))
+                
         self.observation_space = spaces.MultiDiscrete([3] *  board_size[0] * board_size[1])
 
         self.history = []
@@ -68,38 +71,33 @@ class ConnectFourGymEnv(gym.Env):
                 return True
         return False
 
+    def get_loser_reward(self):
+        return self.LOSER_REWARD
+
     def step(self, action:Tuple[int, int], keep_history=False):
         # Execute one time step within the environment
-
-        reward = (0, 0)
-
-        column = action[0]
-        row = self._take_action(self.PLAYER1, column, keep_history)
+        reward = self.IDLE_REWARD
+        player = action[0]
+        column = action[1]
+        row = self._take_action(player, column, keep_history)
+        
         done = False
         if self._game_over(row, column):
             done = True
-            reward = (1, -1)
-
-        if not done:
-            column = action[1]
-            row = self._take_action(self.PLAYER2, column, keep_history)
-            done = False
-            if self._game_over(row, column):
-                done = True
-                reward = (-1, 1)
-
+            reward = self.WINNER_REWARD
         return self.board, reward, done, {}
             
         
     def reset(self):
         # Reset the state of the environment to an initial state
         self.board = np.zeros_like(self.board)
+        self.history = []
     
     def render(self, mode='human', figsize=(10.5, 9), slot_size=3000):
         """Render the environment to the screen"""
-        self.render_board(self.board, figsize, slot_size)
+        self._render_board(self.board, figsize, slot_size)
 
-    def render_board(self, board, figsize=(10.5, 9), slot_size=3000):
+    def _render_board(self, board, figsize=(10.5, 9), slot_size=3000):
         plt.figure(figsize=figsize, facecolor='blue')
 
         row, col = np.indices(board.shape)
@@ -120,7 +118,7 @@ class ConnectFourGymEnv(gym.Env):
     def render_history(self):
         """This is designed to be used in a notebook, be careful"""
         interact(
-            lambda turn: self.render_board(self.history[turn]), 
+            lambda turn: self._render_board(self.history[turn]), 
             turn=widgets.IntSlider(min=0, max=len(self.history)-1, step=1, value=0)
         )
         
