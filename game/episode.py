@@ -53,7 +53,7 @@ def run_episode(
 
 def run_episode_against_self(
     agent: Agent, env: ConnectFourGymEnv, keep_history: bool = False
-):
+) -> Tuple[List[np.ndarray], List[int], List[int]]:
     state = env.reset()
     done = False
     states = []

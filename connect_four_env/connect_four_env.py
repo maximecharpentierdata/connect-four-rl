@@ -130,15 +130,17 @@ class ConnectFourGymEnv(gym.Env):
     def get_next_actions_states(
         state: np.ndarray, player_value: int
     ) -> List[Tuple[int, np.ndarray]]:
+        actions = []
         next_states = []
         for column in range(state.shape[1]):
             try:
                 row = ConnectFourGymEnv.modify_board(state, player_value, column)
-                next_states.append((column, state.copy()))  # Maybe optimize later
+                actions.append(column)
+                next_states.append(state.copy())  # Maybe optimize later
                 state[row, column] = 0
             except ValueError:
                 pass
-        return next_states
+        return actions, next_states
 
     def reset(self) -> np.ndarray:
         # Reset the state of the environment to an initial state

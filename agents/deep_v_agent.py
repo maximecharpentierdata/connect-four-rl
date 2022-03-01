@@ -1,4 +1,3 @@
-import sys
 from typing import Tuple, List
 import numpy as np
 
@@ -10,17 +9,23 @@ from connect_four_env.connect_four_env import ConnectFourGymEnv
 
 
 class ValueNetwork(nn.Module):
-    def __init__(self, grid_size: Tuple[int], n_channels: int):
+    def __init__(self, grid_size: Tuple[int], n_channels: int, kernel_size: int = 4):
         super(ValueNetwork, self).__init__()
+        conved_size = np.prod(grid_size - (kernel_size - 1) * np.ones(2, np.int))
         self.layers = nn.Sequential(
-            nn.Conv2d(1, n_channels, 4),
+            nn.Conv2d(1, n_channels, 4, dtype=torch.float64),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(np.prod(grid_size), 1),
+            nn.Linear(conved_size * n_channels, 1, dtype=torch.float64),
         )
 
-    def forward(self, grid):
-        value = self.layers(grid)
+    def forward(self, grids: np.ndarray) -> float:
+        if len(grids.shape) == 3:
+            grids = torch.from_numpy(grids[:, np.newaxis, ...])
+        elif len(grids.shape) == 2:
+            grids = torch.from_numpy(grids[np.newaxis, np.newaxis, ...])
+
+        value = self.layers(grids)
         return value
 
 
@@ -37,23 +42,24 @@ class DeepVAgent(Agent):
         self.player_number = player_number
         self.random = np.random.default_rng(seed)
         self.loss = nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.value_network.parameters)
+        self.optimizer = torch.optim.Adam(self.value_network.parameters())
         self.epsilon = epsilon
 
     def get_move(self, state: np.ndarray) -> int:
         self.value_network.eval()
 
-        actions_states = ConnectFourGymEnv.get_next_actions_states(
+        actions, next_states = ConnectFourGymEnv.get_next_actions_states(
             state, self.player_number
         )
-        q_values = dict()
+        next_states_values = self.value_network(np.array(next_states))
 
-        for action, state in actions_states:
-            q_values[action] = self.value_network.predict(state)
+        q_values = dict(zip(actions, next_states_values))
 
         if self.random.random() < self.epsilon:
-            action = self.random.choice(q_values.values(), 1)[0]
+            action = self.random.choice(list(q_values.keys()))
         else:
+            # TODO maybe use argmax plutôt que de trier ?
+            # TODO donner une action random si plusieurs sont à égalité
             sorted_q_values = sorted(
                 q_values.keys(), key=lambda action: q_values[action], reverse=True
             )
