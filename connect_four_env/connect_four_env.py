@@ -3,7 +3,8 @@ from gym import spaces
 import numpy as np
 from typing import List, Tuple
 import matplotlib.pyplot as plt
-from ipywidgets import interact, widgets
+from ipywidgets import widgets
+from IPython.display import display
 
 
 class ConnectFourGymEnv(gym.Env):
@@ -170,9 +171,23 @@ class ConnectFourGymEnv(gym.Env):
         plt.axis("off")
         plt.show()
 
-    def render_history(self):
+    def render_history(self, playback_speed=500):
         """This is designed to be used in a notebook, be careful"""
-        interact(
-            lambda turn: self._render_board(self.history[turn]),
-            turn=widgets.IntSlider(min=0, max=len(self.history) - 1, step=1, value=0),
+
+        play = widgets.Play(
+            value=0,
+            min=0,
+            max=len(self.history) - 1,
+            step=1,
+            interval=playback_speed,
+            disabled=False,
         )
+        slider = widgets.IntSlider(min=0, max=len(self.history) - 1, step=1, value=0)
+        widgets.jslink((play, "value"), (slider, "value"))
+        hbox = widgets.HBox([play, slider])
+        output = widgets.interactive_output(
+            lambda turn: self._render_board(self.history[turn]),
+            {"turn": slider},
+        )
+        display(hbox)
+        display(output)
