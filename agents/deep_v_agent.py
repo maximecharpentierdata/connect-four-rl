@@ -19,13 +19,13 @@ class ValueNetwork(nn.Module):
             nn.Linear(conved_size * n_channels, 1, dtype=torch.float64),
         )
 
-    def forward(self, grids: np.ndarray) -> float:
-        if len(grids.shape) == 3:
-            grids = torch.from_numpy(grids[:, np.newaxis, ...])
-        elif len(grids.shape) == 2:
-            grids = torch.from_numpy(grids[np.newaxis, np.newaxis, ...])
+    def forward(self, boards: np.ndarray) -> float:
+        if len(boards.shape) == 3:
+            boards = torch.from_numpy(boards[:, np.newaxis, ...])
+        elif len(boards.shape) == 2:
+            boards = torch.from_numpy(boards[np.newaxis, np.newaxis, ...])
 
-        value = self.layers(grids)
+        value = self.layers(boards)
         return value
 
 
