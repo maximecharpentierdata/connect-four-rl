@@ -1,4 +1,3 @@
-from select import select
 import time
 from typing import List, Tuple
 
