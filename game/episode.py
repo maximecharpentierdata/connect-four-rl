@@ -11,7 +11,8 @@ def run_episode(
     agent_2: Agent,
     env: ConnectFourGymEnv,
     keep_states: bool = False,
-    keep_history: bool = False
+    keep_history: bool = False,
+    for_evaluation = False
 ) -> Union[None, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]]]]:
 
     state = env.reset()
@@ -31,7 +32,7 @@ def run_episode(
 
         agent = agents[current_player]
 
-        action = agent.get_move(state)
+        action = agent.get_move(state, explore = not for_evaluation)
         state, reward, done, _ = env.step(
             (agent.player_number, action), keep_history
         )
