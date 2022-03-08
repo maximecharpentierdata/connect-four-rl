@@ -1,3 +1,4 @@
+from operator import index
 from typing import Tuple, List
 import numpy as np
 
@@ -57,29 +58,26 @@ class DeepVAgent(Agent):
 
         next_states_values = self.value_network(next_states)
 
-        q_values = dict(zip(actions, next_states_values))
-
         if self.random.random() < self.epsilon:
-            action = self.random.choice(list(q_values.keys()))
+            action = self.random.choice(actions)
         else:
-            # TODO maybe use argmax plutôt que de trier ?
-            # TODO donner une action random si plusieurs sont à égalité
-            sorted_q_values = sorted(
-                q_values.keys(), key=lambda action: q_values[action], reverse=True
+            index_action = np.random.choice(
+                np.flatnonzero(next_states_values == next_states_values.max())
             )
-            action = sorted_q_values[0]
-
+            action = actions[index_action]
         return action
 
     def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
 
         # see comment in self.get_move()
-        states = self.player_number * np.array(states) 
+        states = self.player_number * np.array(states)
 
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
+        criterion = self.loss(
+            self.value_network(states), torch.from_numpy(gains[:, np.newaxis])
+        )
         criterion.backward()
         self.optimizer.step()
 
