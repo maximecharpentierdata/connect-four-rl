@@ -12,7 +12,8 @@ def run_episode(
     env: ConnectFourGymEnv,
     keep_states: bool = False,
     keep_history: bool = False,
-    for_evaluation = False
+    for_evaluation = False,
+    get_values: bool = False,
 ) -> Union[None, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]]]]:
 
     state = env.reset()
@@ -27,12 +28,19 @@ def run_episode(
     agents = [agent_1, agent_2]
 
     current_player = 0
+    
+    action_values = []
 
     while not done:
 
         agent = agents[current_player]
 
-        action = agent.get_move(state, explore = not for_evaluation)
+        if get_values:
+            action, values = agent.get_move(state, explore = not for_evaluation, get_values = True)
+            action_values.append(values)
+        else:
+            action = agent.get_move(state, explore = not for_evaluation, get_values = False)
+            
         state, reward, done, _ = env.step(
             (agent.player_number, action), keep_history
         )
@@ -47,11 +55,12 @@ def run_episode(
         rewards[current_player][-1] = env.get_final_reward(
             agents[current_player].player_number
         )
-
         return states, rewards
+        
+    if get_values:
+        return action_values
 
-    return None
-
+    
 
 def run_episode_against_self(
     agent: Agent, env: ConnectFourGymEnv, keep_history: bool = False

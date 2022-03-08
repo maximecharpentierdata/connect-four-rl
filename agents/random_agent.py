@@ -13,7 +13,7 @@ class RandomAgent(Agent):
         self.player_number = player_number
         self.board_shape = board_shape
 
-    def get_move(self, state: np.ndarray, explore: bool = True) -> int:
+    def get_move(self, state: np.ndarray, explore: bool = True, get_values: bool = False) -> int:
 
         actions, next_states = ConnectFourGymEnv.get_next_actions_states(
             state, self.player_number
