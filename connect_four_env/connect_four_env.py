@@ -130,7 +130,7 @@ class ConnectFourGymEnv(gym.Env):
     @staticmethod
     def get_next_actions_states(
         state: np.ndarray, player_value: int
-    ) -> List[Tuple[int, np.ndarray]]:
+    ) -> Tuple[List[int], List[np.ndarray]]:
         actions = []
         next_states = []
         for column in range(state.shape[1]):

@@ -45,7 +45,7 @@ class DeepVAgent(Agent):
         self.optimizer = torch.optim.Adam(self.value_network.parameters())
         self.epsilon = epsilon
 
-    def get_move(self, state: np.ndarray) -> int:
+    def get_move(self, state: np.ndarray, explore: bool = True) -> int:
         self.value_network.eval()
 
         actions, next_states = ConnectFourGymEnv.get_next_actions_states(
@@ -57,7 +57,7 @@ class DeepVAgent(Agent):
 
         next_states_values = self.value_network(next_states)
 
-        if self.random.random() < self.epsilon:
+        if explore and (self.random.random() < self.epsilon):
             action = self.random.choice(actions)
         else:
             index_action = np.random.choice(

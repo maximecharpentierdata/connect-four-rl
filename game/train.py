@@ -20,7 +20,7 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
 def win_rate_vs_random(agent, env, random_agent, n_runs=10):
     n_wins = 0
     for _ in range(n_runs):
-        _, rewards = run_episode(agent, random_agent, env, keep_states=True)
+        _, rewards = run_episode(agent, random_agent, env, keep_states=True, for_evaluation=True)
         n_wins += (rewards[0][-1] == env.WINNER_REWARD) # does not count draws
     return n_wins / n_runs
 
@@ -33,7 +33,7 @@ def train_against_self(
     random_agent = RandomAgent(ConnectFourGymEnv.PLAYER2, env.board.shape)
     
     for i in tqdm(range(n_episodes)):
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 100 == 0 or i == 0:
             win_rates.append(win_rate_vs_random(agent, env, random_agent, test_against_random))
         p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(agent, env)
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
