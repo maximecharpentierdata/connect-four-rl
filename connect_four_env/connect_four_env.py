@@ -22,10 +22,8 @@ class ConnectFourGymEnv(gym.Env):
         self.observation_space = spaces.MultiDiscrete(
             [3] * board_size[0] * board_size[1]
         )
-
-        self.result = None
-
-        self.history = []
+        
+        self.reset()
 
     def _take_action(self, player_value: int, column: int, keep_history: bool) -> int:
         row = modify_board(self.board, player_value, column)
@@ -109,8 +107,9 @@ class ConnectFourGymEnv(gym.Env):
 
     def reset(self) -> np.ndarray:
         # Reset the state of the environment to an initial state
+        self.result = None
         self.board = np.zeros_like(self.board)
-        self.history = []
+        self.history = [self.board.copy()]
         return self.board
 
     def render(self, mode="human", figsize=(10.5, 9), slot_size=3000):
