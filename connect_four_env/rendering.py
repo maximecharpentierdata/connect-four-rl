@@ -81,7 +81,7 @@ def render_history(history, playback_speed=500, agent_values=None):
             if turn == len(history) - 1:
                 return render_board(history[turn])
             else:
-                return render_board(history[turn], agent_values=agent_values[turn + 1])
+                return render_board(history[turn], agent_values=agent_values[turn])
 
         output = widgets.interactive_output(
             render_with_values,
