@@ -37,7 +37,7 @@ class ColumnButtons:
 
 
 def play_with_robot(env: ConnectFourGymEnv, position: str, agent: Agent):
-    """Create an interactive board for playing with the agent
+    """Creates an interactive board for playing with the agent
     DO NOT use in a VSCode Notebook (only in Jupyter Notebook)
 
     Example:
