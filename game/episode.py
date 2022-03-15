@@ -13,7 +13,7 @@ def run_episode(
     env: ConnectFourGymEnv,
     keep_states: bool = False,
     keep_history: bool = False,
-    for_evaluation=False,
+    for_evaluation: bool = False,
     get_values: bool = False,
 ) -> Union[None, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]]]]:
 
