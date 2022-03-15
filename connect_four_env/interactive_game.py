@@ -1,5 +1,4 @@
 import time
-from tkinter import Button
 from typing import Callable
 
 import ipywidgets as widgets
@@ -58,7 +57,7 @@ def play_with_robot(env: ConnectFourGymEnv, position: str, agent: Agent):
     agent.player_number = agent_player_number
     column_buttons = ColumnButtons(7)
 
-    def handler(button: Button):
+    def handler(button: widgets.Button):
         clear_output(wait=True)
         action = int(button.description) - 1
         state, reward, done, _ = env.step([human_player_number, action])
