@@ -22,7 +22,7 @@ def win_rate_vs_random(agent, env, random_agent, n_runs=10):
     n_wins = 0
     for _ in range(n_runs):
         _, rewards = run_episode(agent, random_agent, env, keep_states=True, for_evaluation=True)
-        n_wins += rewards[0][-1] == env.WINNER_REWARD  # does not count draws
+        n_wins += rewards[0][-1] == constants.WINNER_REWARD  # does not count draws
     return n_wins / n_runs
 
 
