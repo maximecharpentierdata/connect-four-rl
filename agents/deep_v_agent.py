@@ -66,13 +66,9 @@ class DeepVAgent(Agent):
                 exp_values = np.exp(next_states_values.detach().numpy().flatten())
                 index_action = np.random.choice(len(actions), p=exp_values / sum(exp_values))
             else:
-                try:
-                    index_action = np.random.choice(
-                        np.flatnonzero(next_states_values == next_states_values.max())
-                    )
-                except ValueError:
-                    print(next_states_values)
-                    raise ValueError
+                index_action = np.random.choice(
+                    np.flatnonzero(next_states_values == next_states_values.max())
+                )
             action = actions[index_action]
 
         if get_values:
