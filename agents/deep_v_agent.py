@@ -1,6 +1,6 @@
-from typing import List, Tuple, Union
-
+from typing import Tuple, List, Union
 import numpy as np
+
 import torch, os
 from torch import nn
 
@@ -19,7 +19,8 @@ class ValueNetwork(nn.Module):
             nn.Linear(conved_size * n_channels, 1, dtype=torch.float64),
         )
 
-    def forward(self, boards: np.ndarray) -> float:
+    def forward(self, boards: Union[np.ndarray, List[np.ndarray]]) -> float:
+        boards = np.array(boards)
         if len(boards.shape) == 3:
             boards = torch.from_numpy(boards[:, np.newaxis, ...])
         elif len(boards.shape) == 2:
@@ -53,10 +54,6 @@ class DeepVAgent(Agent):
         self.value_network.eval()
 
         actions, next_states = get_next_actions_states(state, self.player_number)
-        # This is necessary because the agent has to learn with him having one number
-        # in order to be able to know which tokens are his and which are his opponent's
-        next_states = self.player_number * np.array(next_states)
-
         next_states_values = self.value_network(next_states)
 
         if explore and (self.random.random() < self.epsilon):
@@ -78,9 +75,6 @@ class DeepVAgent(Agent):
 
     def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
-
-        # see comment in self.get_move()
-        states = self.player_number * np.array(states)
 
         self.value_network.train()
         self.optimizer.zero_grad()

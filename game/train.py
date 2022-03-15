@@ -19,16 +19,14 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
     return np.array(gains)
 
 
-def win_rate_vs_opponent(agent, env, opponent_agent, n_runs=10):
+def win_rate_vs_opponent(agent: DeepVAgent, opponent, env: ConnectFourGymEnv, n_runs=10):
     n_wins = 0
-    for i in range(n_runs):
-        even = (i % 2 == 0)
-        _, rewards = run_episode(
-            agent if even else opponent_agent, 
-            opponent_agent if even else agent, 
-            env, keep_states=True, for_evaluation=True
-        )
-        n_wins += rewards[0][-1] == env.WINNER_REWARD  # does not count draws
+    index_agent = int(agent.player_number != env.PLAYER1)
+    agent1 = [agent, opponent][index_agent]
+    agent2 = [agent, opponent][1 - index_agent]
+    for _ in range(n_runs):
+        _, rewards = run_episode(agent1, agent2, env, keep_states=True, for_evaluation=True)
+        n_wins += rewards[index_agent][-1] == env.WINNER_REWARD  # does not count draws
     return n_wins / n_runs
 
 
@@ -38,6 +36,7 @@ def make_opponent(agent: DeepVAgent):
     return opponent
 
 
+# Obsolete (for the moment at least)
 def train_against_self(
     discount: float,
     n_episodes: int,
@@ -66,3 +65,36 @@ def train_against_self(
             losses.append(loss)
 
     return win_rates, losses
+
+
+def train_both_agents(
+    discount: float,
+    n_episodes: int,
+    agent1: DeepVAgent,
+    agent2: DeepVAgent,
+    n_test_runs: int = 10,
+    period_change_opp: int = 1000,
+):
+    win_rates_1, losses_1 = [], []
+    win_rates_2, losses_2 = [], []
+    env = ConnectFourGymEnv()
+    latest_opponent_1 = RandomAgent(env.PLAYER2, env.board.shape)
+    latest_opponent_2 = RandomAgent(env.PLAYER1, env.board.shape)
+
+    for i in tqdm(range(n_episodes)):
+        if (i + 1) % period_change_opp == 0:
+            latest_opponent_1 = make_opponent(agent2)
+            latest_opponent_2 = make_opponent(agent1)
+        if (i + 1) % 100 == 0 or i == 0:
+            win_rates_1.append(win_rate_vs_opponent(agent1, latest_opponent_1, env, n_test_runs))
+            win_rates_2.append(win_rate_vs_opponent(agent2, latest_opponent_2, env, n_test_runs))
+        (p1_states, p2_states), (p1_rewards, p2_rewards) = run_episode(agent1, agent2, env, keep_states=True)
+        p1_gains = compute_gain_from_rewards(p1_rewards, discount)
+        p2_gains = compute_gain_from_rewards(p2_rewards, discount)
+
+        loss_1 = agent1.learn_from_episode(p1_states, p1_gains)
+        losses_1.append(loss_1)
+        loss_2 = agent2.learn_from_episode(p2_states, p2_gains)
+        losses_2.append(loss_2)
+
+    return (win_rates_1, win_rates_2), (losses_1, losses_2)
