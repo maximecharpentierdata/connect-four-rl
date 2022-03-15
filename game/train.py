@@ -25,14 +25,14 @@ def win_rate_vs_opponent(
     agent: DeepVAgent, opponent, env: ConnectFourGymEnv, n_runs=10
 ):
     n_wins = 0
-    index_agent = int(agent.player_number != env.PLAYER1)
+    index_agent = int(agent.player_number != constants.PLAYER1)
     agent1 = [agent, opponent][index_agent]
     agent2 = [agent, opponent][1 - index_agent]
     for _ in range(n_runs):
         _, rewards = run_episode(
             agent1, agent2, env, keep_states=True, for_evaluation=True
         )
-        n_wins += rewards[index_agent][-1] == env.WINNER_REWARD  # does not count draws
+        n_wins += rewards[index_agent][-1] == constants.WINNER_REWARD  # does not count draws
     return n_wins / n_runs
 
 
@@ -88,8 +88,8 @@ def train_both_agents(
     win_rates_1, losses_1 = [], []
     win_rates_2, losses_2 = [], []
     env = ConnectFourGymEnv()
-    latest_opponent_1 = RandomAgent(env.PLAYER2, env.board.shape)
-    latest_opponent_2 = RandomAgent(env.PLAYER1, env.board.shape)
+    latest_opponent_1 = RandomAgent(constants.PLAYER2, env.board.shape)
+    latest_opponent_2 = RandomAgent(constants.PLAYER1, env.board.shape)
 
     for i in tqdm(range(n_episodes)):
         if (i + 1) % period_change_opp == 0:
