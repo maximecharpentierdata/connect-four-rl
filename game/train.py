@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import List, Tuple
 
 import numpy as np
-from tqdm.auto import tqdm
+from tqdm.notebook import tqdm
 
 import constants
 from agents.deep_v_agent import DeepVAgent
