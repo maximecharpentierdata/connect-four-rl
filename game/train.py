@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import List, Tuple
 
 import numpy as np
+from agents.agent import Agent
 from tqdm.auto import tqdm
 
 import constants
