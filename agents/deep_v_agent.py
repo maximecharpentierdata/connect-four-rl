@@ -37,6 +37,7 @@ class DeepVAgent(Agent):
         epsilon: float = 0,
         board_shape: Tuple[int, int] = (6, 7),
         seed: int = 42,
+        stochastic: bool = False,
     ):
         super().__init__(player_number=player_number, board_shape=board_shape)
         self.value_network = ValueNetwork(board_shape, n_channels)
@@ -44,6 +45,7 @@ class DeepVAgent(Agent):
         self.loss = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.value_network.parameters())
         self.epsilon = epsilon
+        self.stochastic = stochastic
 
     def get_move(
         self, state: np.ndarray, explore: bool = True, get_values=False
@@ -60,9 +62,13 @@ class DeepVAgent(Agent):
         if explore and (self.random.random() < self.epsilon):
             action = self.random.choice(actions)
         else:
-            index_action = np.random.choice(
-                np.flatnonzero(next_states_values == next_states_values.max())
-            )
+            if self.stochastic:
+                exp_values = np.exp(next_states_values.detach().numpy().flatten())
+                index_action = np.random.choice(len(actions), p=exp_values/sum(exp_values))
+            else:
+                index_action = np.random.choice(
+                    np.flatnonzero(next_states_values == next_states_values.max())
+                )
             action = actions[index_action]
 
         if get_values:

@@ -21,22 +21,37 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
 
 def win_rate_vs_opponent(agent, env, opponent_agent, n_runs=10):
     n_wins = 0
-    for _ in range(n_runs):
-        _, rewards = run_episode(agent, opponent_agent, env, keep_states=True, for_evaluation=True)
-        n_wins += (rewards[0][-1] == env.WINNER_REWARD) # does not count draws
+    for i in range(n_runs):
+        even = (i % 2 == 0)
+        _, rewards = run_episode(
+            agent if even else opponent_agent, 
+            opponent_agent if even else agent, 
+            env, keep_states=True, for_evaluation=True
+        )
+        n_wins += rewards[0][-1] == env.WINNER_REWARD  # does not count draws
     return n_wins / n_runs
 
 
+def make_opponent(agent: DeepVAgent):
+    opponent = deepcopy(agent)
+    opponent.stochastic = True
+    return opponent
+
+
 def train_against_self(
-    discount: float, n_episodes: int, agent: DeepVAgent, n_test_runs: int = 10
+    discount: float,
+    n_episodes: int,
+    agent: DeepVAgent,
+    n_test_runs: int = 10,
+    freq_change_opp: int = 1000,
 ) -> Tuple[List[float], List[float]]:
     win_rates, losses = [], []
     env = ConnectFourGymEnv()
-    random_agent = RandomAgent(constants.PLAYER2, env.board.shape)
+    latest_opponent = make_opponent(agent)
 
     for i in tqdm(range(n_episodes)):
-        if (i + 1) % 2000 == 0:
-            latest_opponent = deepcopy(agent)
+        if (i + 1) % freq_change_opp == 0:
+            latest_opponent = make_opponent(agent)
         if (i + 1) % 100 == 0 or i == 0:
             win_rates.append(win_rate_vs_opponent(agent, env, latest_opponent, n_test_runs))
         p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(agent, env)
