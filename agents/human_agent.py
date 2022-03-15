@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,7 +7,7 @@ from IPython.display import display
 from ipywidgets import widgets
 
 from agents.agent import Agent
-from connect_four_env.connect_four_env import ConnectFourGymEnv
+from connect_four_env.utils import get_next_actions_states
 
 
 class HumanAgent(Agent):
@@ -17,8 +17,6 @@ class HumanAgent(Agent):
 
     def __init__(self, player_number: int, board_shape: Tuple[int, int]):
         super().__init__(player_number, board_shape)
-        self.player_number = player_number
-        self.board_shape = board_shape
         self.clicked = False
         self.action_selected = None
         self.figsize = None
@@ -43,14 +41,16 @@ class HumanAgent(Agent):
 
         return fig
 
-    def get_move(self, state: np.ndarray) -> int:
+    def get_move(
+        self, state: np.ndarray, explore: bool = True, get_values: bool = False
+    ) -> Union[int, Tuple[int, Tuple[List[int], List[float]]]]:
 
         output = widgets.Output()
 
         with output:
             self.render_board(state)
 
-        actions, _ = ConnectFourGymEnv.get_next_actions_states(state, self.player_number)
+        actions, _ = get_next_actions_states(state, self.player_number)
 
         buttons = []
 
@@ -75,12 +75,14 @@ class HumanAgent(Agent):
         display(widgets.HBox(buttons, layout=widgets.Layout(width="100%")))
 
         while not clicked:
-            with output:
-                print(clicked)
             time.sleep(0.5)
 
         self.clicked = False
-        return self.action_selected
+
+        if get_values:
+            return self.action_selected, (None, None)
+        else:
+            return self.action_selected
 
     def learn_from_episode(self, states: List[np.ndarray], gains: List[float]):
         pass
