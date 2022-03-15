@@ -59,7 +59,7 @@ def play_with_robot(env: ConnectFourGymEnv, position: str, agent: Agent):
     column_buttons = ColumnButtons(7)
 
     def handler(button: Button):
-        clear_output()
+        clear_output(wait=True)
         action = int(button.description) - 1
         state, reward, done, _ = env.step([human_player_number, action])
         if done:
@@ -68,7 +68,7 @@ def play_with_robot(env: ConnectFourGymEnv, position: str, agent: Agent):
 
         env.render()
         time.sleep(0.5)
-        clear_output()
+        clear_output(wait=True)
 
         agent_action = agent.get_move(state)
         state, reward, done, _ = env.step([agent_player_number, agent_action])
