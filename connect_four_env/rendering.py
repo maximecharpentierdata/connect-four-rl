@@ -5,12 +5,17 @@ import numpy as np
 from IPython.display import display
 from ipywidgets import widgets
 
-import constants
+from constants import PLAYER2, PLAYER1, EMPTY
 from connect_four_env.utils import get_fall_row
 
+SLOT_COLORS = {
+    PLAYER1: "yellow",
+    PLAYER2: "red",
+    EMPTY: "grey",
+}
 
 def render_board(
-    board,
+    board: np.ndarray,
     figsize: Tuple[float, float] = (10.5, 9),
     slot_size: int = 3000,
     agent_values: Optional[Tuple[List[int], List[float]]] = None,
@@ -19,17 +24,18 @@ def render_board(
     plt.figure(figsize=figsize, facecolor="blue")
 
     rows, cols = np.indices(board.shape)
-    for slot_value, color in [
-        (constants.PLAYER1, "yellow"),
-        (constants.PLAYER2, "red"),
-        (constants.EMPTY, "grey"),
-    ]:
+    for slot_value, color in SLOT_COLORS.items():
         x = cols[board == slot_value].flatten()
         y = rows[board == slot_value].flatten()
         plt.scatter(x, y, c=color, s=slot_size)
 
     if agent_values:
+        if (np.isin(board, [PLAYER1, PLAYER2]).sum() % 2 == 0):
+            text_color = SLOT_COLORS[PLAYER1]
+        else:
+            text_color = SLOT_COLORS[PLAYER2]
         actions, actions_values = agent_values
+        best_value = max(actions_values)
         for action, value in zip(actions, actions_values):
             column = action
             try:
@@ -40,7 +46,8 @@ def render_board(
                     f"{value:.2f}",
                     horizontalalignment="center",
                     fontsize=14,
-                    fontweight="bold",
+                    fontweight="bold" if value == best_value else "normal",
+                    color=text_color
                 )
             except ValueError:
                 continue
@@ -70,8 +77,14 @@ def render_history(history, playback_speed=500, agent_values=None):
     hbox = widgets.HBox([play, slider])
 
     if agent_values:
+        def render_with_values(turn):
+            if turn == len(history) - 1:
+                return render_board(history[turn])
+            else:
+                return render_board(history[turn], agent_values=agent_values[turn + 1])
+
         output = widgets.interactive_output(
-            lambda turn: render_board(history[turn], agent_values=agent_values[turn]),
+            render_with_values,
             {"turn": slider},
         )
     else:
