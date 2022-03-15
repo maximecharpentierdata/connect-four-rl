@@ -55,7 +55,7 @@ def play_with_robot(env: ConnectFourGymEnv, position: str, agent: Agent):
         agent_player_number = constants.PLAYER1
 
     agent.player_number = agent_player_number
-    column_buttons = ColumnButtons(env.shape[1])
+    column_buttons = ColumnButtons(env.board.shape[1])
 
     def handler(button: widgets.Button):
         clear_output(wait=True)
