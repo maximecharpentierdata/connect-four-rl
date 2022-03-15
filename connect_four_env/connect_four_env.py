@@ -11,7 +11,7 @@ from connect_four_env.utils import modify_board
 
 class ConnectFourGymEnv(gym.Env):
     def __init__(self, board_size: Tuple[int] = (6, 7)):
-        super(ConnectFourGymEnv, self).__init__()
+        super().__init__()
 
         self.board = np.zeros(board_size)
 
@@ -19,10 +19,8 @@ class ConnectFourGymEnv(gym.Env):
 
         self.action_space = spaces.MultiDiscrete((2 * [board_size[1]]))
 
-        self.observation_space = spaces.MultiDiscrete(
-            [3] * board_size[0] * board_size[1]
-        )
-        
+        self.observation_space = spaces.MultiDiscrete([3] * board_size[0] * board_size[1])
+
         self.reset()
 
     def _take_action(self, player_value: int, column: int, keep_history: bool) -> int:
@@ -37,14 +35,11 @@ class ConnectFourGymEnv(gym.Env):
     def _check_column(self, column: int) -> bool:
         return column < 0 or column >= self.board.shape[1]
 
-    def _check_direction(
-        self, row: int, column: int, direction: Tuple[int, int]
-    ) -> bool:
+    def _check_direction(self, row: int, column: int, direction: Tuple[int, int]) -> bool:
         total = -1
         i = 0
         while (
-            self.board[row + i * direction[0], column + i * direction[1]]
-            == self.board[row, column]
+            self.board[row + i * direction[0], column + i * direction[1]] == self.board[row, column]
         ):
             total += 1
             i += 1
@@ -54,8 +49,7 @@ class ConnectFourGymEnv(gym.Env):
                 break
         i = 0
         while (
-            self.board[row + i * direction[0], column + i * direction[1]]
-            == self.board[row, column]
+            self.board[row + i * direction[0], column + i * direction[1]] == self.board[row, column]
         ):
             total += 1
             i -= 1

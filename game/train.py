@@ -10,6 +10,8 @@ from agents.deep_v_agent import DeepVAgent
 from agents.random_agent import RandomAgent
 from connect_four_env.connect_four_env import ConnectFourGymEnv
 from game.episode import run_episode, run_episode_against_self
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.ndarray:
@@ -82,6 +84,22 @@ def train_against_self(
     return win_rates, losses
 
 
+def plot_win_rates(win_rates: List[List[float]], losses: List[float], path="progress.png"):
+    fig, ax = plt.subplots(1, 2, figsize=(15, 8))
+
+    fig.patch.set_facecolor("#f2f2f2")
+
+    for win_rate in win_rates:
+        ax[0].plot(win_rate)
+    ax[0].set_title("Win rate against itself at different stages of training")
+
+    pd.DataFrame(losses).rolling(500).mean().plot(ax=ax[1])
+    ax[1].set_title("Loss")
+
+    fig.savefig(path)
+    plt.close(fig)
+
+
 def train_both_agents(
     discount: float,
     n_episodes: int,
@@ -108,6 +126,9 @@ def train_both_agents(
         if (i + 1) % interval_test == 0 or i == 0:
             evaluate_agent(agent1, opponents_1, env, win_rates_1, n_test_runs)
             evaluate_agent(agent2, opponents_2, env, win_rates_2, n_test_runs)
+            if i > 0:
+                plot_win_rates(win_rates_1, losses_1, "progress_1.png")
+                plot_win_rates(win_rates_2, losses_2, "progress_2.png")
 
         (p1_states, p2_states), (p1_rewards, p2_rewards) = run_episode(
             agent1, agent2, env, keep_states=True

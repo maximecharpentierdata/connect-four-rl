@@ -15,10 +15,10 @@ class ValueNetwork(nn.Module):
         conved_size = np.prod(board_size - (kernel_size - 1) * np.ones(2, np.int))
         self.layers = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=n_channels, kernel_size=4, dtype=torch.float64),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Flatten(),
             nn.Linear(conved_size * n_channels, 64, dtype=torch.float64),
-            nn.Linear(64, 64, dtype=torch.float64),
+            nn.LeakyReLU(),
             nn.Linear(64, 1, dtype=torch.float64),
         )
 
@@ -47,7 +47,7 @@ class DeepVAgent(Agent):
         self.value_network = ValueNetwork(board_shape, n_channels)
         self.random = np.random.default_rng(seed)
         self.loss = nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.value_network.parameters())
+        self.optimizer = torch.optim.SGD(self.value_network.parameters(), lr=0.001)
         self.epsilon = epsilon
         self.stochastic = stochastic
 
@@ -66,9 +66,13 @@ class DeepVAgent(Agent):
                 exp_values = np.exp(next_states_values.detach().numpy().flatten())
                 index_action = np.random.choice(len(actions), p=exp_values / sum(exp_values))
             else:
-                index_action = np.random.choice(
-                    np.flatnonzero(next_states_values == next_states_values.max())
-                )
+                try:
+                    index_action = np.random.choice(
+                        np.flatnonzero(next_states_values == next_states_values.max())
+                    )
+                except ValueError:
+                    print(next_states_values)
+                    raise ValueError
             action = actions[index_action]
 
         if get_values:
