@@ -14,10 +14,12 @@ class ValueNetwork(nn.Module):
         super(ValueNetwork, self).__init__()
         conved_size = np.prod(board_size - (kernel_size - 1) * np.ones(2, np.int))
         self.layers = nn.Sequential(
-            nn.Conv2d(1, n_channels, 4, dtype=torch.float64),
+            nn.Conv2d(in_channels=1, out_channels=n_channels, kernel_size=4, dtype=torch.float64),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(conved_size * n_channels, 1, dtype=torch.float64),
+            nn.Linear(conved_size * n_channels, 64, dtype=torch.float64),
+            nn.Linear(64, 64, dtype=torch.float64),
+            nn.Linear(64, 1, dtype=torch.float64),
         )
 
     def forward(self, boards: Union[np.ndarray, List[np.ndarray]]) -> float:
@@ -62,9 +64,7 @@ class DeepVAgent(Agent):
         else:
             if self.stochastic:
                 exp_values = np.exp(next_states_values.detach().numpy().flatten())
-                index_action = np.random.choice(
-                    len(actions), p=exp_values / sum(exp_values)
-                )
+                index_action = np.random.choice(len(actions), p=exp_values / sum(exp_values))
             else:
                 index_action = np.random.choice(
                     np.flatnonzero(next_states_values == next_states_values.max())
@@ -81,9 +81,7 @@ class DeepVAgent(Agent):
 
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(
-            self.value_network(states), torch.from_numpy(gains[:, np.newaxis])
-        )
+        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
         criterion.backward()
         self.optimizer.step()
 
