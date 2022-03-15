@@ -1,7 +1,9 @@
-from agents.agent import Agent
-from typing import Tuple, List
+from typing import List, Tuple, Union
+
 import numpy as np
-from connect_four_env.connect_four_env import ConnectFourGymEnv
+
+from agents.agent import Agent
+from connect_four_env.utils import get_next_actions_states
 
 
 class RandomAgent(Agent):
@@ -10,17 +12,20 @@ class RandomAgent(Agent):
     """
 
     def __init__(self, player_number: int, board_shape: Tuple[int, int]):
-        self.player_number = player_number
-        self.board_shape = board_shape
+        super().__init__(player_number=player_number, board_shape=board_shape)
 
-    def get_move(self, state: np.ndarray, explore: bool = True, get_values: bool = False) -> int:
+    def get_move(
+        self, state: np.ndarray, explore: bool = True, get_values: bool = False
+    ) -> Union[int, Tuple[int, Tuple[List[int], List[float]]]]:
 
-        actions, next_states = ConnectFourGymEnv.get_next_actions_states(
-            state, self.player_number
-        )
+        actions, _ = get_next_actions_states(state, self.player_number)
 
-        random_action = np.random.randint(0, len(actions))
-        return actions[random_action]
+        random_action = int(np.random.randint(0, len(actions)))
+
+        if get_values:
+            return actions[random_action], (actions, [1.0 / len(actions)] * len(actions))
+        else:
+            return actions[random_action]
 
     def learn_from_episode(self, states: List[np.ndarray], gains: List[float]):
         pass

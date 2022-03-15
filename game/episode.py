@@ -1,7 +1,8 @@
-from typing import List, Union, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 
+import constants
 from agents.agent import Agent
 from connect_four_env.connect_four_env import ConnectFourGymEnv
 
@@ -12,7 +13,7 @@ def run_episode(
     env: ConnectFourGymEnv,
     keep_states: bool = False,
     keep_history: bool = False,
-    for_evaluation = False,
+    for_evaluation=False,
     get_values: bool = False,
 ) -> Union[None, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]]]]:
 
@@ -23,27 +24,24 @@ def run_episode(
         states = ([], [])
         rewards = ([], [])
 
-    agent_1.player_number = env.PLAYER1
-    agent_2.player_number = env.PLAYER2
+    agent_1.player_number = constants.PLAYER1
+    agent_2.player_number = constants.PLAYER2
     agents = [agent_1, agent_2]
 
     current_player = 0
-    
+
     action_values = []
 
     while not done:
-
         agent = agents[current_player]
 
         if get_values:
-            action, values = agent.get_move(state, explore = not for_evaluation, get_values = True)
+            action, values = agent.get_move(state, explore=not for_evaluation, get_values=True)
             action_values.append(values)
         else:
-            action = agent.get_move(state, explore = not for_evaluation, get_values = False)
-            
-        state, reward, done, _ = env.step(
-            (agent.player_number, action), keep_history
-        )
+            action = agent.get_move(state, explore=not for_evaluation, get_values=False)
+
+        state, reward, done, _ = env.step((agent.player_number, action), keep_history)
 
         if keep_states:
             rewards[current_player].append(reward)
@@ -52,15 +50,12 @@ def run_episode(
         current_player = (current_player + 1) % 2
 
     if keep_states:
-        rewards[current_player][-1] = env.get_final_reward(
-            agents[current_player].player_number
-        )
+        rewards[current_player][-1] = env.get_final_reward(agents[current_player].player_number)
         return states, rewards
-        
+
     if get_values:
         return action_values
 
-    
 
 def run_episode_against_self(
     agent: Agent, env: ConnectFourGymEnv, keep_history: bool = False
@@ -71,7 +66,7 @@ def run_episode_against_self(
     state = env.reset()
     done, opponent_turn = False, False
     states, rewards = [], []
-    players = [env.PLAYER1, env.PLAYER2]
+    players = [constants.PLAYER1, constants.PLAYER2]
     while not done:
         player_number = players[opponent_turn]
         agent.player_number = player_number

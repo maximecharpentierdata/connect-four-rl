@@ -1,15 +1,18 @@
 from abc import ABC, abstractmethod
+from typing import List, Tuple, Union
+
 import numpy as np
-from typing import List, Tuple
 
 
 class Agent(ABC):
-    @abstractmethod
     def __init__(self, player_number: int, board_shape: Tuple[int, int] = (6, 7)):
-        pass
+        self.player_number = player_number
+        self.board_shape = board_shape
 
     @abstractmethod
-    def get_move(self, state: np.ndarray, explore: bool = True, get_values: bool = False) -> int:
+    def get_move(
+        self, state: np.ndarray, explore: bool = True, get_values: bool = False
+    ) -> Union[int, Tuple[int, Tuple[List[int], List[float]]]]:
         pass
 
     @abstractmethod

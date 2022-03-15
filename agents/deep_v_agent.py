@@ -1,11 +1,11 @@
-from typing import Tuple, List
-import numpy as np
+from typing import List, Tuple, Union
 
+import numpy as np
 import torch
 from torch import nn
-from agents.agent import Agent
 
-from connect_four_env.connect_four_env import ConnectFourGymEnv
+from agents.agent import Agent
+from connect_four_env.utils import get_next_actions_states
 
 
 class ValueNetwork(nn.Module):
@@ -38,22 +38,22 @@ class DeepVAgent(Agent):
         board_shape: Tuple[int, int] = (6, 7),
         seed: int = 42,
     ):
+        super().__init__(player_number=player_number, board_shape=board_shape)
         self.value_network = ValueNetwork(board_shape, n_channels)
-        self.player_number = player_number
         self.random = np.random.default_rng(seed)
         self.loss = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.value_network.parameters())
         self.epsilon = epsilon
 
-    def get_move(self, state: np.ndarray, explore: bool = True, get_values = False) -> int:
+    def get_move(
+        self, state: np.ndarray, explore: bool = True, get_values=False
+    ) -> Union[int, Tuple[int, Tuple[List[int], List[float]]]]:
         self.value_network.eval()
 
-        actions, next_states = ConnectFourGymEnv.get_next_actions_states(
-            state, self.player_number
-        )
+        actions, next_states = get_next_actions_states(state, self.player_number)
         # This is necessary because the agent has to learn with him having one number
         # in order to be able to know which tokens are his and which are his opponent's
-        next_states = self.player_number * np.array(next_states) 
+        next_states = self.player_number * np.array(next_states)
 
         next_states_values = self.value_network(next_states)
 
@@ -64,12 +64,11 @@ class DeepVAgent(Agent):
                 np.flatnonzero(next_states_values == next_states_values.max())
             )
             action = actions[index_action]
-        
+
         if get_values:
-            return action, [actions, next_states_values]
+            return action, (actions, [value.item() for value in next_states_values])
         else:
             return action
-    
 
     def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
@@ -79,9 +78,7 @@ class DeepVAgent(Agent):
 
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(
-            self.value_network(states), torch.from_numpy(gains[:, np.newaxis])
-        )
+        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
         criterion.backward()
         self.optimizer.step()
 
