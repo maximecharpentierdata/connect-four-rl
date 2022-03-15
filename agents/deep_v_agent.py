@@ -1,7 +1,8 @@
-from typing import Tuple, List, Union
-import numpy as np
+import os
+from typing import List, Tuple, Union
 
-import torch, os
+import numpy as np
+import torch
 from torch import nn
 
 from agents.agent import Agent
