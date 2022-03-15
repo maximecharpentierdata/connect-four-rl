@@ -23,7 +23,10 @@ class RandomAgent(Agent):
         random_action = int(np.random.randint(0, len(actions)))
 
         if get_values:
-            return actions[random_action], (actions, [1.0 / len(actions)] * len(actions))
+            return actions[random_action], (
+                actions,
+                [1.0 / len(actions)] * len(actions),
+            )
         else:
             return actions[random_action]
 

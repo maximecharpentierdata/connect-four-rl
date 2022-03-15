@@ -36,7 +36,9 @@ def run_episode(
         agent = agents[current_player]
 
         if get_values:
-            action, values = agent.get_move(state, explore=not for_evaluation, get_values=True)
+            action, values = agent.get_move(
+                state, explore=not for_evaluation, get_values=True
+            )
             action_values.append(values)
         else:
             action = agent.get_move(state, explore=not for_evaluation, get_values=False)
@@ -50,7 +52,9 @@ def run_episode(
         current_player = (current_player + 1) % 2
 
     if keep_states:
-        rewards[current_player][-1] = env.get_final_reward(agents[current_player].player_number)
+        rewards[current_player][-1] = env.get_final_reward(
+            agents[current_player].player_number
+        )
         return states, rewards
 
     if get_values:

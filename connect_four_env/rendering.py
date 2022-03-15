@@ -1,3 +1,5 @@
+from typing import List, Optional, Tuple
+
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import display
@@ -5,7 +7,6 @@ from ipywidgets import widgets
 
 import constants
 from connect_four_env.utils import get_fall_row
-from typing import Optional, Tuple, List
 
 
 def render_board(

@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -19,7 +20,8 @@ class ValueNetwork(nn.Module):
             nn.Linear(conved_size * n_channels, 1, dtype=torch.float64),
         )
 
-    def forward(self, boards: np.ndarray) -> float:
+    def forward(self, boards: Union[np.ndarray, List[np.ndarray]]) -> float:
+        boards = np.array(boards)
         if len(boards.shape) == 3:
             boards = torch.from_numpy(boards[:, np.newaxis, ...])
         elif len(boards.shape) == 2:
@@ -37,6 +39,7 @@ class DeepVAgent(Agent):
         epsilon: float = 0,
         board_shape: Tuple[int, int] = (6, 7),
         seed: int = 42,
+        stochastic: bool = False,
     ):
         super().__init__(player_number=player_number, board_shape=board_shape)
         self.value_network = ValueNetwork(board_shape, n_channels)
@@ -44,6 +47,7 @@ class DeepVAgent(Agent):
         self.loss = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.value_network.parameters())
         self.epsilon = epsilon
+        self.stochastic = stochastic
 
     def get_move(
         self, state: np.ndarray, explore: bool = True, get_values=False
@@ -51,18 +55,20 @@ class DeepVAgent(Agent):
         self.value_network.eval()
 
         actions, next_states = get_next_actions_states(state, self.player_number)
-        # This is necessary because the agent has to learn with him having one number
-        # in order to be able to know which tokens are his and which are his opponent's
-        next_states = self.player_number * np.array(next_states)
-
         next_states_values = self.value_network(next_states)
 
         if explore and (self.random.random() < self.epsilon):
             action = self.random.choice(actions)
         else:
-            index_action = np.random.choice(
-                np.flatnonzero(next_states_values == next_states_values.max())
-            )
+            if self.stochastic:
+                exp_values = np.exp(next_states_values.detach().numpy().flatten())
+                index_action = np.random.choice(
+                    len(actions), p=exp_values / sum(exp_values)
+                )
+            else:
+                index_action = np.random.choice(
+                    np.flatnonzero(next_states_values == next_states_values.max())
+                )
             action = actions[index_action]
 
         if get_values:
@@ -73,13 +79,22 @@ class DeepVAgent(Agent):
     def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
 
-        # see comment in self.get_move()
-        states = self.player_number * np.array(states)
-
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
+        criterion = self.loss(
+            self.value_network(states), torch.from_numpy(gains[:, np.newaxis])
+        )
         criterion.backward()
         self.optimizer.step()
 
         return criterion.item()
+
+    def save(self, name: str, path: str = "saved_agents") -> None:
+        os.makedirs(path, exist_ok=True)
+        name = name + ".pt"
+        torch.save(self.value_network, os.path.join(path, name))
+
+    def load(self, name: str, path: str = "saved_agents"):
+        name = name + ".pt"
+        with open(os.path.join(path, name), "rb") as file:
+            self.value_network = torch.load(file)
