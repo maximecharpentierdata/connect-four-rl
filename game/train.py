@@ -23,7 +23,7 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
 
 
 def win_rate_vs_opponent(
-    agent: DeepVAgent, opponent, env: ConnectFourGymEnv, n_runs=10
+    agent: Agent, opponent: Agent, env: ConnectFourGymEnv, n_runs: int = 10
 ):
     n_wins = 0
     index_agent = int(agent.player_number != constants.PLAYER1)
