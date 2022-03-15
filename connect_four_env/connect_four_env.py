@@ -153,7 +153,8 @@ class ConnectFourGymEnv(gym.Env):
         """Render the environment to the screen"""
         self._render_board(self.board, figsize, slot_size)
 
-    def _render_board(self, board, figsize=(10.5, 9), slot_size=3000):
+    def _render_board(self, board, figsize=(10.5, 9), slot_size=3000, agent_values = None):
+        agent_values = agent_values or []
         plt.figure(figsize=figsize, facecolor="blue")
 
         row, col = np.indices(board.shape)
@@ -165,14 +166,25 @@ class ConnectFourGymEnv(gym.Env):
             x = col[board == slot_value].flatten()
             y = row[board == slot_value].flatten()
             plt.scatter(x, y, c=color, s=slot_size)
+            
+        if agent_values:
+            actions, actions_values = agent_values
+            for action, value in zip(actions, actions_values):
+                column = action
+                row = ConnectFourGymEnv._get_fall_row(board, column)
+                plt.text(
+                    column, row, f"{value.item():.2f}", horizontalalignment = "center", fontsize=14,
+                    fontweight = "bold"
+                )
 
         plt.xlim(-0.5, board.shape[1] - 0.5)
         plt.ylim(-0.5, board.shape[0] - 0.5)
         plt.axis("off")
         plt.show()
 
-    def render_history(self, playback_speed=500):
+    def render_history(self, playback_speed=500, agent_values = None):
         """This is designed to be used in a notebook, be careful"""
+        agent_values = agent_values or []
 
         play = widgets.Play(
             value=0,
@@ -186,7 +198,7 @@ class ConnectFourGymEnv(gym.Env):
         widgets.jslink((play, "value"), (slider, "value"))
         hbox = widgets.HBox([play, slider])
         output = widgets.interactive_output(
-            lambda turn: self._render_board(self.history[turn]),
+            lambda turn: self._render_board(self.history[turn], agent_values = agent_values[turn]),
             {"turn": slider},
         )
         display(hbox)

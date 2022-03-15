@@ -9,7 +9,7 @@ class Agent(ABC):
         pass
 
     @abstractmethod
-    def get_move(self, state: np.ndarray, explore: bool = True) -> int:
+    def get_move(self, state: np.ndarray, explore: bool = True, get_values: bool = False) -> int:
         pass
 
     @abstractmethod

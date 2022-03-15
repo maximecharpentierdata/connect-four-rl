@@ -45,7 +45,7 @@ class DeepVAgent(Agent):
         self.optimizer = torch.optim.Adam(self.value_network.parameters())
         self.epsilon = epsilon
 
-    def get_move(self, state: np.ndarray, explore: bool = True) -> int:
+    def get_move(self, state: np.ndarray, explore: bool = True, get_values = False) -> int:
         self.value_network.eval()
 
         actions, next_states = ConnectFourGymEnv.get_next_actions_states(
@@ -64,7 +64,12 @@ class DeepVAgent(Agent):
                 np.flatnonzero(next_states_values == next_states_values.max())
             )
             action = actions[index_action]
-        return action
+        
+        if get_values:
+            return action, [actions, next_states_values]
+        else:
+            return action
+    
 
     def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
