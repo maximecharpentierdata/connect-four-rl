@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 
 import numpy as np
-import torch
+import torch, os
 from torch import nn
 
 from agents.agent import Agent
@@ -83,3 +83,14 @@ class DeepVAgent(Agent):
         self.optimizer.step()
 
         return criterion.item()
+
+    def save(self, name: str, path: str = "saved_agents") -> None:
+        os.makedirs(path, exist_ok=True)
+        name = name + ".pt"
+        torch.save(self.value_network, os.path.join(path, name))
+
+    def load(self, name: str, path: str = "saved_agents"):
+        name = name + ".pt"
+        with open(os.path.join(path, name), "rb") as file:
+            self.value_network = torch.load(file)
+            

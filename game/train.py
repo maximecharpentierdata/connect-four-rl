@@ -1,6 +1,7 @@
 from typing import List, Tuple
 
 import numpy as np
+from copy import deepcopy
 from tqdm.auto import tqdm
 
 import constants
@@ -18,24 +19,26 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
     return np.array(gains)
 
 
-def win_rate_vs_random(agent, env, random_agent, n_runs=10):
+def win_rate_vs_opponent(agent, env, opponent_agent, n_runs=10):
     n_wins = 0
     for _ in range(n_runs):
-        _, rewards = run_episode(agent, random_agent, env, keep_states=True, for_evaluation=True)
-        n_wins += rewards[0][-1] == constants.WINNER_REWARD  # does not count draws
+        _, rewards = run_episode(agent, opponent_agent, env, keep_states=True, for_evaluation=True)
+        n_wins += (rewards[0][-1] == env.WINNER_REWARD) # does not count draws
     return n_wins / n_runs
 
 
 def train_against_self(
-    discount: float, n_episodes: int, agent: DeepVAgent, test_against_random: int = 10
+    discount: float, n_episodes: int, agent: DeepVAgent, n_test_runs: int = 10
 ) -> Tuple[List[float], List[float]]:
     win_rates, losses = [], []
     env = ConnectFourGymEnv()
     random_agent = RandomAgent(constants.PLAYER2, env.board.shape)
 
     for i in tqdm(range(n_episodes)):
+        if (i + 1) % 2000 == 0:
+            latest_opponent = deepcopy(agent)
         if (i + 1) % 100 == 0 or i == 0:
-            win_rates.append(win_rate_vs_random(agent, env, random_agent, test_against_random))
+            win_rates.append(win_rate_vs_opponent(agent, env, latest_opponent, n_test_runs))
         p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(agent, env)
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
         p2_gains = compute_gain_from_rewards(p2_rewards, discount)
