@@ -123,8 +123,8 @@ def train_both_agents(
     num_opponents: int = 5,
     interval_test: int = 100,
 ):
-    win_rates_1, losses_1 = [[0] if i else [] for i in range(num_opponents)], []
-    win_rates_2, losses_2 = [[0] if i else [] for i in range(num_opponents)], []
+    win_rates_1, losses_1 = [[]] + [[0] for _ in range(num_opponents-1)], []
+    win_rates_2, losses_2 = [[]] +  [[0] for _ in range(num_opponents-1)], []
     env = ConnectFourGymEnv()
     opponents_1 = [RandomAgent(constants.PLAYER2, env.board.shape)]
     opponents_2 = [RandomAgent(constants.PLAYER1, env.board.shape)]
