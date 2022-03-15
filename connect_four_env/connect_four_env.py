@@ -166,14 +166,15 @@ class ConnectFourGymEnv(gym.Env):
             y = row[board == slot_value].flatten()
             plt.scatter(x, y, c=color, s=slot_size)
             
-        actions, values = agent_values
-        for action, value in zip(actions, values):
-            column = action
-            row = ConnectFourGymEnv._get_fall_row(board, column)
-            plt.text(
-                column, row, f"{value.item():.2f}", horizontalalignment = "center", fontsize=14,
-                fontweight = "bold"
-            )
+        if agent_values:
+            actions, values = agent_values
+            for action, value in zip(actions, values):
+                column = action
+                row = ConnectFourGymEnv._get_fall_row(board, column)
+                plt.text(
+                    column, row, f"{value.item():.2f}", horizontalalignment = "center", fontsize=14,
+                    fontweight = "bold"
+                )
 
         plt.xlim(-0.5, board.shape[1] - 0.5)
         plt.ylim(-0.5, board.shape[0] - 0.5)
