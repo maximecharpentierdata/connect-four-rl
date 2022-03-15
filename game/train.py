@@ -14,18 +14,24 @@ from game.episode import run_episode, run_episode_against_self
 def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.ndarray:
     gains = []
     for step in range(len(rewards)):
-        dicounted_rewards = [rewards[i] * discount ** (i - step) for i in range(step, len(rewards))]
+        dicounted_rewards = [
+            rewards[i] * discount ** (i - step) for i in range(step, len(rewards))
+        ]
         gains.append(np.sum(dicounted_rewards))
     return np.array(gains)
 
 
-def win_rate_vs_opponent(agent: DeepVAgent, opponent, env: ConnectFourGymEnv, n_runs=10):
+def win_rate_vs_opponent(
+    agent: DeepVAgent, opponent, env: ConnectFourGymEnv, n_runs=10
+):
     n_wins = 0
     index_agent = int(agent.player_number != env.PLAYER1)
     agent1 = [agent, opponent][index_agent]
     agent2 = [agent, opponent][1 - index_agent]
     for _ in range(n_runs):
-        _, rewards = run_episode(agent1, agent2, env, keep_states=True, for_evaluation=True)
+        _, rewards = run_episode(
+            agent1, agent2, env, keep_states=True, for_evaluation=True
+        )
         n_wins += rewards[index_agent][-1] == env.WINNER_REWARD  # does not count draws
     return n_wins / n_runs
 
@@ -52,8 +58,12 @@ def train_against_self(
         if (i + 1) % freq_change_opp == 0:
             latest_opponent = make_opponent(agent)
         if (i + 1) % 100 == 0 or i == 0:
-            win_rates.append(win_rate_vs_opponent(agent, env, latest_opponent, n_test_runs))
-        p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(agent, env)
+            win_rates.append(
+                win_rate_vs_opponent(agent, env, latest_opponent, n_test_runs)
+            )
+        p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(
+            agent, env
+        )
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
         p2_gains = compute_gain_from_rewards(p2_rewards, discount)
         for (states, gains, player_number) in [
@@ -86,9 +96,15 @@ def train_both_agents(
             latest_opponent_1 = make_opponent(agent2)
             latest_opponent_2 = make_opponent(agent1)
         if (i + 1) % 100 == 0 or i == 0:
-            win_rates_1.append(win_rate_vs_opponent(agent1, latest_opponent_1, env, n_test_runs))
-            win_rates_2.append(win_rate_vs_opponent(agent2, latest_opponent_2, env, n_test_runs))
-        (p1_states, p2_states), (p1_rewards, p2_rewards) = run_episode(agent1, agent2, env, keep_states=True)
+            win_rates_1.append(
+                win_rate_vs_opponent(agent1, latest_opponent_1, env, n_test_runs)
+            )
+            win_rates_2.append(
+                win_rate_vs_opponent(agent2, latest_opponent_2, env, n_test_runs)
+            )
+        (p1_states, p2_states), (p1_rewards, p2_rewards) = run_episode(
+            agent1, agent2, env, keep_states=True
+        )
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
         p2_gains = compute_gain_from_rewards(p2_rewards, discount)
 

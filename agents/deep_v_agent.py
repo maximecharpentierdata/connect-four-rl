@@ -61,7 +61,9 @@ class DeepVAgent(Agent):
         else:
             if self.stochastic:
                 exp_values = np.exp(next_states_values.detach().numpy().flatten())
-                index_action = np.random.choice(len(actions), p=exp_values/sum(exp_values))
+                index_action = np.random.choice(
+                    len(actions), p=exp_values / sum(exp_values)
+                )
             else:
                 index_action = np.random.choice(
                     np.flatnonzero(next_states_values == next_states_values.max())
@@ -78,7 +80,9 @@ class DeepVAgent(Agent):
 
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
+        criterion = self.loss(
+            self.value_network(states), torch.from_numpy(gains[:, np.newaxis])
+        )
         criterion.backward()
         self.optimizer.step()
 
@@ -93,4 +97,3 @@ class DeepVAgent(Agent):
         name = name + ".pt"
         with open(os.path.join(path, name), "rb") as file:
             self.value_network = torch.load(file)
-            
