@@ -79,7 +79,6 @@ def train_against_self(
     win_rates, losses = [[] for _ in range(num_opponents)], []
     env = ConnectFourGymEnv()
     opponents = [RandomAgent(constants.PLAYER1, env.board.shape)]
-    env = ConnectFourGymEnv()
     
     period_change_opponent = (n_episodes // num_opponents) + 1
 
