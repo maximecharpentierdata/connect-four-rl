@@ -60,8 +60,8 @@ class DeepVAgent(Agent):
         self.value_network.eval()
 
         actions, next_states = get_next_actions_states(state, self.player_number)
-        next_states_values_translated = [self._translate_state(state) for state in next_states]
-        next_states_values = self.value_network(next_states_values_translated)
+        next_states_translated = [self._translate_state(state) for state in next_states]
+        next_states_values = self.value_network(next_states_translated)
 
         if explore and (self.random.random() < self.epsilon):
             action = self.random.choice(actions)
