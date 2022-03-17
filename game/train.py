@@ -33,6 +33,16 @@ def win_rate_vs_opponent(agent: Agent, opponent: Agent, env: ConnectFourGymEnv, 
     return n_wins / n_runs
 
 
+def win_rate_vs_self(agent: Agent, opponent: Agent, env: ConnectFourGymEnv, n_runs: int = 10):
+    n_wins = 0
+    for i in range(n_runs):
+        agent1 = [agent, opponent][i % 2]
+        agent2 = [agent, opponent][1 - i % 2]
+        _, rewards = run_episode(agent1, agent2, env, keep_states=True, for_evaluation=True)
+        n_wins += rewards[i % 2][-1] == constants.WINNER_REWARD  # does not count draws
+    return n_wins / n_runs
+
+
 def make_opponent(agent: DeepVAgent):
     opponent = deepcopy(agent)
     opponent.stochastic = True
@@ -45,12 +55,16 @@ def evaluate_agent(
     env: ConnectFourGymEnv,
     win_rates: List[List[float]],
     n_test_runs: int,
+    against_self: bool = False,
 ):
     for i, opponent in enumerate(opponents):
-        win_rates[i].append(win_rate_vs_opponent(agent, opponent, env, n_test_runs))
-
+        if not against_self:
+            win_rates[i].append(win_rate_vs_opponent(agent, opponent, env, n_test_runs))
+        else:
+            win_rates[i].append(win_rate_vs_self(agent, opponent, env, n_test_runs))
     for i in range(len(opponents), len(win_rates)):
         win_rates[i].append(0)
+        
 
 
 # Obsolete (for the moment at least)
@@ -59,17 +73,25 @@ def train_against_self(
     n_episodes: int,
     agent: DeepVAgent,
     n_test_runs: int = 10,
-    freq_change_opp: int = 1000,
+    num_opponents: int = 5,
+    interval_test: int = 100,
 ) -> Tuple[List[float], List[float]]:
-    win_rates, losses = [], []
+    win_rates, losses = [[] for _ in range(num_opponents)], []
     env = ConnectFourGymEnv()
-    latest_opponent = make_opponent(agent)
+    opponents = [RandomAgent(constants.PLAYER1, env.board.shape)]
+    
+    period_change_opponent = (n_episodes // num_opponents) + 1
 
     for i in tqdm(range(n_episodes)):
-        if (i + 1) % freq_change_opp == 0:
-            latest_opponent = make_opponent(agent)
-        if (i + 1) % 100 == 0 or i == 0:
-            win_rates.append(win_rate_vs_opponent(agent, env, latest_opponent, n_test_runs))
+        
+        if i > 0 and i % period_change_opponent == 0:
+            opponents.append(make_opponent(agent))
+            
+        if (i + 1) % interval_test == 0 or i == 0:
+            evaluate_agent(agent, opponents, env, win_rates, n_test_runs, against_self=True)
+            if i > 0:
+                plot_win_rates(win_rates, losses, "progress.png")
+                
         p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(agent, env)
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
         p2_gains = compute_gain_from_rewards(p2_rewards, discount)

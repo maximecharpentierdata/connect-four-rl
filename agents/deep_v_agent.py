@@ -51,13 +51,17 @@ class DeepVAgent(Agent):
         self.epsilon = epsilon
         self.stochastic = stochastic
 
+    def _translate_state(self, state: np.ndarray) -> np.ndarray:
+        return self.player_number * state
+
     def get_move(
         self, state: np.ndarray, explore: bool = True, get_values=False
     ) -> Union[int, Tuple[int, Tuple[List[int], List[float]]]]:
         self.value_network.eval()
 
         actions, next_states = get_next_actions_states(state, self.player_number)
-        next_states_values = self.value_network(next_states)
+        next_states_translated = [self._translate_state(state) for state in next_states]
+        next_states_values = self.value_network(next_states_translated)
 
         if explore and (self.random.random() < self.epsilon):
             action = self.random.choice(actions)
@@ -79,9 +83,11 @@ class DeepVAgent(Agent):
     def learn_from_episode(self, states: List[np.ndarray], gains: np.ndarray):
         assert len(states) == len(gains), "not as many states as there are gains"
 
+        states_translated = [self._translate_state(state) for state in states]
+
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(self.value_network(states), torch.from_numpy(gains[:, np.newaxis]))
+        criterion = self.loss(self.value_network(states_translated), torch.from_numpy(gains[:, np.newaxis]))
         criterion.backward()
         self.optimizer.step()
 
