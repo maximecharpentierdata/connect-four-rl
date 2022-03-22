@@ -1,5 +1,6 @@
 from copy import deepcopy
 from typing import List, Tuple
+from torch import multiprocessing
 
 import numpy as np
 from tqdm.notebook import tqdm
@@ -24,6 +25,37 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
     return np.array(gains)
 
 
+def win_rate_vs_opponent(
+    agent: Agent, opponent: Agent, env: ConnectFourGymEnv, n_runs: int = 10
+):
+    n_wins = 0
+    index_agent = int(agent.player_number != constants.PLAYER1)
+    agent1 = [agent, opponent][index_agent]
+    agent2 = [agent, opponent][1 - index_agent]
+    for _ in range(n_runs):
+        _, rewards = run_episode(
+            agent1, agent2, env, keep_states=True, for_evaluation=True
+        )
+        n_wins += (
+            rewards[index_agent][-1] == constants.WINNER_REWARD
+        )  # does not count draws
+    return n_wins / n_runs
+
+
+def win_rate_vs_self(
+    agent: Agent, opponent: Agent, env: ConnectFourGymEnv, n_runs: int = 10
+):
+    n_wins = 0
+    for i in range(n_runs):
+        agent1 = [agent, opponent][i % 2]
+        agent2 = [agent, opponent][1 - i % 2]
+        _, rewards = run_episode(
+            agent1, agent2, env, keep_states=True, for_evaluation=True
+        )
+        n_wins += rewards[i % 2][-1] == constants.WINNER_REWARD  # does not count draws
+    return n_wins / n_runs
+
+
 def make_opponent(agent: DeepVAgent):
     opponent = deepcopy(agent)
     opponent.stochastic = True
@@ -45,6 +77,42 @@ def evaluate_agent(
             win_rates[i].append(win_rate_vs_self(agent, opponent, env, n_test_runs))
 
 
+def plot_win_rates(
+    win_rates: List[List[float]],
+    losses: List[float],
+    interval_test: int,
+    path="progress.png",
+):
+    fig, ax = plt.subplots(1, 2, figsize=(15, 8))
+
+    fig.patch.set_facecolor("#f2f2f2")
+    num_tests = len(win_rates[0])
+    for i, win_rate in enumerate(win_rates):
+        if len(win_rate) <= 1:
+            continue
+
+        start = num_tests - len(win_rate)
+        if i == 0:
+            label = "Random Agent"
+        else:
+            label = f"Opponent trained {start * interval_test} episode"
+        ax[0].plot(
+            [i * interval_test for i in range(start, num_tests)], win_rate, label=label
+        )
+    ax[0].set_title("Win rate against opponent at different stages of training")
+    ax[0].set_xlabel(f"Episodes")
+    ax[0].set_ylim(0, 1)
+    ax[0].legend()
+
+    pd.DataFrame(losses).rolling(500).mean().plot(ax=ax[1])
+    ax[1].set_title("Loss")
+    ax[1].set_xlabel(f"Episodes")
+    ax[1].get_legend().remove()
+
+    fig.savefig(path)
+    plt.close(fig)
+
+
 def train_against_self(
     discount: float,
     n_episodes: int,
@@ -52,6 +120,7 @@ def train_against_self(
     n_test_runs: int = 10,
     num_opponents: int = 5,
     interval_test: int = 100,
+    num_workers: int = 8,
 ) -> Tuple[List[float], List[float]]:
     win_rates, losses = [[]] + [[0] for _ in range(num_opponents - 1)], []
     env = ConnectFourGymEnv()
@@ -59,8 +128,15 @@ def train_against_self(
 
     period_change_opponent = (n_episodes // num_opponents) + 1
 
-    for i in tqdm(range(n_episodes)):
+    iterable = []
+    for _ in range(num_workers):
+        new_env = ConnectFourGymEnv()
+        new_agent = agent.duplicate()
+        iterable.append((new_agent, new_env, False))
 
+    pool = multiprocessing.Pool()
+
+    for i in tqdm(range(n_episodes // num_workers)):
         if i > 0 and i % period_change_opponent == 0:
             opponents.append(make_opponent(agent))
 
@@ -71,11 +147,22 @@ def train_against_self(
             if i > 0:
                 plot_win_rates(win_rates, losses, interval_test, "progress.png")
 
-        p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(
-            agent, env
-        )
+        outputs = pool.starmap(run_episode_against_self, iterable=iterable)
+
+        p1_states = []
+        p2_states = []
+        p1_rewards = []
+        p2_rewards = []
+
+        for output in outputs:
+            p1_states += output[0]
+            p2_states += output[1]
+            p1_rewards += output[2]
+            p2_rewards += output[3]
+
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
         p2_gains = compute_gain_from_rewards(p2_rewards, discount)
+
         for (states, gains, player_number) in [
             (p1_states, p1_gains, constants.PLAYER1),
             (p2_states, p2_gains, constants.PLAYER2),
@@ -83,6 +170,8 @@ def train_against_self(
             agent.player_number = player_number
             loss = agent.learn_from_episode(states, gains)
             losses.append(loss)
+
+    pool.close()
 
     return win_rates, losses
 
