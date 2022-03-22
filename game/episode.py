@@ -15,7 +15,7 @@ def run_episode(
     keep_history: bool = False,
     for_evaluation: bool = False,
     get_values: bool = False,
-) -> Union[None, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]]]]:
+) -> Union[int, Tuple[Tuple[List[np.ndarray]], Tuple[List[int]], int]]:
 
     state = env.reset()
     done = False
@@ -55,10 +55,12 @@ def run_episode(
         rewards[current_player][-1] = env.get_final_reward(
             agents[current_player].player_number
         )
-        return states, rewards
+        return states, rewards, env.result
 
     if get_values:
-        return action_values
+        return action_values, env.result
+
+    return env.result
 
 
 def run_episode_against_self(

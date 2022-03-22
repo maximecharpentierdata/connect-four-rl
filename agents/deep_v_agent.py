@@ -7,14 +7,20 @@ from torch import nn
 
 from agents.agent import Agent
 from connect_four_env.utils import get_next_actions_states
+import constants
 
 
 class ValueNetwork(nn.Module):
     def __init__(self, board_size: Tuple[int], n_channels: int, kernel_size: int = 4):
         super(ValueNetwork, self).__init__()
-        conved_size = np.prod(board_size - (kernel_size - 1) * np.ones(2, np.int))
+        conved_size = np.prod(board_size - (kernel_size - 1) * np.ones(2, int))
         self.layers = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=n_channels, kernel_size=4, dtype=torch.float64),
+            nn.Conv2d(
+                in_channels=1,
+                out_channels=n_channels,
+                kernel_size=4,
+                dtype=torch.float64,
+            ),
             nn.LeakyReLU(),
             nn.Flatten(),
             nn.Linear(conved_size * n_channels, 64, dtype=torch.float64),
@@ -36,8 +42,8 @@ class ValueNetwork(nn.Module):
 class DeepVAgent(Agent):
     def __init__(
         self,
-        n_channels: int,
-        player_number: int,
+        n_channels: int = 64,
+        player_number: int = constants.PLAYER1,
         epsilon: float = 0,
         board_shape: Tuple[int, int] = (6, 7),
         seed: int = 42,
@@ -68,7 +74,9 @@ class DeepVAgent(Agent):
         else:
             if self.stochastic:
                 exp_values = np.exp(next_states_values.detach().numpy().flatten())
-                index_action = np.random.choice(len(actions), p=exp_values / sum(exp_values))
+                index_action = np.random.choice(
+                    len(actions), p=exp_values / sum(exp_values)
+                )
             else:
                 index_action = np.random.choice(
                     np.flatnonzero(next_states_values == next_states_values.max())
@@ -87,18 +95,21 @@ class DeepVAgent(Agent):
 
         self.value_network.train()
         self.optimizer.zero_grad()
-        criterion = self.loss(self.value_network(states_translated), torch.from_numpy(gains[:, np.newaxis]))
+        criterion = self.loss(
+            self.value_network(states_translated),
+            torch.from_numpy(gains[:, np.newaxis]),
+        )
         criterion.backward()
         self.optimizer.step()
 
         return criterion.item()
 
-    def save(self, name: str, path: str = "saved_agents") -> None:
+    def save(self, name: str, path: str = "private/saved_agents") -> None:
         os.makedirs(path, exist_ok=True)
         name = name + ".pt"
         torch.save(self.value_network, os.path.join(path, name))
 
-    def load(self, name: str, path: str = "saved_agents"):
+    def load(self, name: str, path: str = "private/saved_agents"):
         name = name + ".pt"
         with open(os.path.join(path, name), "rb") as file:
             self.value_network = torch.load(file)
