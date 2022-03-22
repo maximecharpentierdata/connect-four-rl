@@ -23,17 +23,18 @@ def make_tournament(agents, env, agents_names=None):
             results[agent1_idx][agent2_idx] = result
 
     wins_and_losses = []
-    for agent_idx, _ in enumerate(agents):
-        wins = sum(np.asarray(results[agent_idx]) == 1) + sum(
-            [results[i][agent_idx] == -1 for i in range(len(agents))]
+    results = np.asarray(results)
+    for agent_idx in range(len(agents)):
+        wins = sum(results[agent_idx] == 1) + sum(
+            results[:, agent_idx] == -1
         )
-        losses = sum(np.asarray(results[agent_idx]) == -1) + sum(
-            [results[i][agent_idx] == 1 for i in range(len(agents))]
+        losses = sum(results[agent_idx] == -1) + sum(
+            results[:, agent_idx] == 1
         )
-        ties = sum(np.asarray(results[agent_idx]) == 0) + sum(
-            [results[i][agent_idx] == 0 for i in range(len(agents))]
+        ties = sum(results[agent_idx] == 0) + sum(
+            results[:, agent_idx] == 0
         )
-
+        
         wins_and_losses.append((wins, losses, ties))
 
     wins_losses_df = pd.DataFrame(
