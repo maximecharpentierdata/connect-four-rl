@@ -34,7 +34,7 @@ def make_tournament(agents, env, agents_names=None):
         losses = sum(results[agent_idx] == constants.PLAYER2) + sum(
             results[:, agent_idx] == constants.PLAYER1
         )
-        ties = sum(results[agent_idx] == 0) + sum(results[:, agent_idx] == 0)
+        ties = sum(results[agent_idx] == 0) + sum(results[:, agent_idx] == 0) - 2
 
         wins_and_losses.append((wins, losses, ties))
 
@@ -44,7 +44,9 @@ def make_tournament(agents, env, agents_names=None):
         index=agents_names,
     ).sort_values(by=["wins", "ties"], ascending=False)
 
-    return results, wins_losses_df
+    results_df = pd.DataFrame(results, columns=agents_names, index=agents_names)
+
+    return results_df, wins_losses_df
 
 
 def make_tournament_from_files(agents_paths, env, agents_names=None, add_random=False):
