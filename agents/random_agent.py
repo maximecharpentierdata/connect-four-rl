@@ -2,6 +2,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 
+import constants
 from agents.agent import Agent
 from connect_four_env.utils import get_next_actions_states
 
@@ -11,7 +12,11 @@ class RandomAgent(Agent):
     A random agent that chooses a random action at each step.
     """
 
-    def __init__(self, player_number: int, board_shape: Tuple[int, int]):
+    def __init__(
+        self,
+        player_number: int = constants.PLAYER1,
+        board_shape: Tuple[int, int] = (6, 7),
+    ):
         super().__init__(player_number=player_number, board_shape=board_shape)
 
     def get_move(
