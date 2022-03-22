@@ -20,7 +20,7 @@ def make_tournament(agents, env, agents_names=None):
             result = run_episode(
                 agent1, agent2, env, keep_states=False, for_evaluation=True
             )
-            results[agent1_idx][agent2_idx] += result
+            results[agent1_idx][agent2_idx] = result
 
     wins_and_losses = []
     for agent_idx, _ in enumerate(agents):
