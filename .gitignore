@@ -131,3 +131,6 @@ dmypy.json
 
 # Notebooks
 *.ipynb
+
+# Private data
+private/
