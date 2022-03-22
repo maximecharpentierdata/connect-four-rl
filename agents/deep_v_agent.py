@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from torch import nn
 
+import constants
 from agents.agent import Agent
 from connect_four_env.utils import get_next_actions_states
-import constants
 
 
 class ValueNetwork(nn.Module):
@@ -48,12 +48,16 @@ class DeepVAgent(Agent):
         board_shape: Tuple[int, int] = (6, 7),
         seed: int = 42,
         stochastic: bool = False,
+        learning_rate: float = 0.001,
     ):
         super().__init__(player_number=player_number, board_shape=board_shape)
         self.value_network = ValueNetwork(board_shape, n_channels)
         self.random = np.random.default_rng(seed)
         self.loss = nn.MSELoss()
-        self.optimizer = torch.optim.SGD(self.value_network.parameters(), lr=0.001)
+        self.learning_rate = learning_rate
+        self.optimizer = torch.optim.SGD(
+            self.value_network.parameters(), lr=learning_rate
+        )
         self.epsilon = epsilon
         self.stochastic = stochastic
 
@@ -104,14 +108,12 @@ class DeepVAgent(Agent):
 
         return criterion.item()
 
-    def save(self, name: str, path: str = "private/saved_agents") -> None:
-        os.makedirs(path, exist_ok=True)
-        name = name + ".pt"
-        torch.save(self.value_network, os.path.join(path, name))
+    def save(self, path: str) -> None:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        torch.save(self.value_network, path)
 
-    def load(self, name: str, path: str = "private/saved_agents"):
-        name = name + ".pt"
-        with open(os.path.join(path, name), "rb") as file:
+    def load(self, path: str) -> None:
+        with open(path, "rb") as file:
             self.value_network = torch.load(file)
 
     def duplicate(self) -> Agent:

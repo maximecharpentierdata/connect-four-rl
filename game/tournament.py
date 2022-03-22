@@ -1,9 +1,12 @@
+import os
+
 import numpy as np
 import pandas as pd
 
 from agents.deep_v_agent import DeepVAgent
 from agents.random_agent import RandomAgent
 from game.episode import run_episode
+import constants
 
 
 def make_tournament(agents, env, agents_names=None):
@@ -25,16 +28,14 @@ def make_tournament(agents, env, agents_names=None):
     wins_and_losses = []
     results = np.asarray(results)
     for agent_idx in range(len(agents)):
-        wins = sum(results[agent_idx] == 1) + sum(
-            results[:, agent_idx] == -1
+        wins = sum(results[agent_idx] == constants.PLAYER1) + sum(
+            results[:, agent_idx] == constants.PLAYER2
         )
-        losses = sum(results[agent_idx] == -1) + sum(
-            results[:, agent_idx] == 1
+        losses = sum(results[agent_idx] == constants.PLAYER2) + sum(
+            results[:, agent_idx] == constants.PLAYER1
         )
-        ties = sum(results[agent_idx] == 0) + sum(
-            results[:, agent_idx] == 0
-        )
-        
+        ties = sum(results[agent_idx] == 0) + sum(results[:, agent_idx] == 0)
+
         wins_and_losses.append((wins, losses, ties))
 
     wins_losses_df = pd.DataFrame(
@@ -51,8 +52,11 @@ def make_tournament_from_files(agents_paths, env, agents_names=None, add_random=
     agents = []
     for agent_path in agents_paths:
         agent = DeepVAgent(board_shape=env.board.shape)
-        agent.load(agent_path)
+        agent.load(os.path.join(agent_path, "agent.pt"))
         agents.append(agent)
+
+    if agents_names is None:
+        agents_names = [os.path.basename(agent_path) for agent_path in agents_paths]
 
     if add_random:
         agents.append(RandomAgent())

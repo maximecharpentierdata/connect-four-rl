@@ -1,6 +1,8 @@
+import os
 from copy import deepcopy
 from typing import List, Tuple
 from torch import multiprocessing
+import json
 
 import numpy as np
 from torch import multiprocessing
@@ -79,17 +81,26 @@ def evaluate_agent(
 
 
 def train_against_self(
-    discount: float,
-    n_episodes: int,
     agent: DeepVAgent,
+    path_to_save: str,
+    n_episodes: int = 1000,
+    discount: float = 1,
     n_test_runs: int = 10,
     num_opponents: int = 5,
     interval_test: int = 100,
     num_workers: int = 8,
+    checkpoint_interval: int = 500,
 ) -> Tuple[List[float], List[float]]:
+
     win_rates, losses = [[]] + [[0] for _ in range(num_opponents - 1)], []
     env = ConnectFourGymEnv()
     opponents = [RandomAgent(constants.PLAYER1, env.board.shape)]
+
+    os.makedirs(path_to_save, exist_ok=True)
+
+    progress_path = os.path.join(path_to_save, "progress.png")
+    config_path = os.path.join(path_to_save, "config.json")
+    agent_path = os.path.join(path_to_save, "agent.pt")
 
     period_change_opponent = (n_episodes // num_opponents) + 1
 
@@ -98,6 +109,15 @@ def train_against_self(
         new_env = ConnectFourGymEnv()
         new_agent = agent.duplicate()
         iterable.append((new_agent, new_env, False))
+    architecture = list(map(str, next(agent.value_network.children())))
+
+    config = {
+        "n_episodes": 0,
+        "discount": discount,
+        "epsilon": agent.epsilon,
+        "value_network": architecture,
+        "learning_rate": agent.learning_rate,
+    }
 
     pool = multiprocessing.Pool()
 
@@ -110,7 +130,7 @@ def train_against_self(
                 agent, opponents, env, win_rates, n_test_runs, against_self=True
             )
             if i > 0:
-                plot_win_rates(win_rates, losses, interval_test, "progress.png")
+                plot_win_rates(win_rates, losses, interval_test, progress_path)
 
         outputs = pool.starmap(run_episode_against_self, iterable=iterable)
 
@@ -136,7 +156,18 @@ def train_against_self(
             loss = agent.learn_from_episode(states, gains)
             losses.append(loss)
 
+        if i > 0 and i % checkpoint_interval == 0:
+            agent.save(agent_path)
+            config["n_episodes"] = i
+            with open(config_path, "w") as f:
+                json.dump(config, f, indent=4, sort_keys=True)
+
     pool.close()
+
+    agent.save(agent_path)
+    config["n_episodes"] = n_episodes
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=4, sort_keys=True)
 
     return win_rates, losses
 
