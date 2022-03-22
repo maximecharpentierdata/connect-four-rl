@@ -113,3 +113,8 @@ class DeepVAgent(Agent):
         name = name + ".pt"
         with open(os.path.join(path, name), "rb") as file:
             self.value_network = torch.load(file)
+
+    def duplicate(self) -> Agent:
+        agent = DeepVAgent(1, self.player_number)
+        agent.value_network = self.value_network
+        return agent
