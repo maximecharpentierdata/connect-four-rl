@@ -17,7 +17,9 @@ class RandomAgent(Agent):
         player_number: int = constants.PLAYER1,
         board_shape: Tuple[int, int] = (6, 7),
     ):
-        super().__init__(player_number=player_number, board_shape=board_shape)
+        super().__init__(
+            player_number=player_number, board_shape=board_shape, stochastic=False
+        )
 
     def get_move(
         self, state: np.ndarray, explore: bool = True, get_values: bool = False

@@ -90,6 +90,7 @@ def train_against_self(
         "epsilon": agent.epsilon,
         "value_network": architecture,
         "learning_rate": agent.learning_rate,
+        "stochastic": agent.stochastic,
     }
 
     for i in tqdm(range(n_episodes // num_workers)):
@@ -138,7 +139,8 @@ def train_against_self(
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=4, sort_keys=True)
 
-    pool.close()
+    if num_workers > 1:
+        pool.close()
 
     agent.save(agent_path)
     config["n_episodes"] = n_episodes
