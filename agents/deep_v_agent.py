@@ -61,7 +61,6 @@ class DeepVAgent(Agent):
             self.value_network.parameters(), lr=learning_rate
         )
         self.epsilon = epsilon
-        self.stochastic = stochastic
 
     def _translate_state(self, state: np.ndarray) -> np.ndarray:
         return self.player_number * state

@@ -16,10 +16,9 @@ class RandomAgent(Agent):
         self,
         player_number: int = constants.PLAYER1,
         board_shape: Tuple[int, int] = (6, 7),
-        stochastic: bool = False,
     ):
         super().__init__(
-            player_number=player_number, board_shape=board_shape, stochastic=stochastic
+            player_number=player_number, board_shape=board_shape, stochastic=False
         )
 
     def get_move(
