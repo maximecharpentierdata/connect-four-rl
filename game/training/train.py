@@ -180,7 +180,7 @@ def train_both_agents(
                 plot_win_rates(win_rates_1, losses_1, interval_test, "progress_1.png")
                 plot_win_rates(win_rates_2, losses_2, interval_test, "progress_2.png")
 
-        (p1_states, p2_states), (p1_rewards, p2_rewards) = run_episode(
+        (p1_states, p2_states), (p1_rewards, p2_rewards), _ = run_episode(
             agent1, agent2, env, keep_states=True
         )
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
