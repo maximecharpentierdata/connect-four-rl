@@ -1,8 +1,7 @@
+import json
 import os
 from copy import deepcopy
 from typing import List, Tuple
-from torch import multiprocessing
-import json
 
 import numpy as np
 from torch import multiprocessing
@@ -26,37 +25,6 @@ def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.n
         ]
         gains.append(np.sum(discounted_rewards))
     return np.array(gains)
-
-
-def win_rate_vs_opponent(
-    agent: Agent, opponent: Agent, env: ConnectFourGymEnv, n_runs: int = 10
-):
-    n_wins = 0
-    index_agent = int(agent.player_number != constants.PLAYER1)
-    agent1 = [agent, opponent][index_agent]
-    agent2 = [agent, opponent][1 - index_agent]
-    for _ in range(n_runs):
-        _, rewards = run_episode(
-            agent1, agent2, env, keep_states=True, for_evaluation=True
-        )
-        n_wins += (
-            rewards[index_agent][-1] == constants.WINNER_REWARD
-        )  # does not count draws
-    return n_wins / n_runs
-
-
-def win_rate_vs_self(
-    agent: Agent, opponent: Agent, env: ConnectFourGymEnv, n_runs: int = 10
-):
-    n_wins = 0
-    for i in range(n_runs):
-        agent1 = [agent, opponent][i % 2]
-        agent2 = [agent, opponent][1 - i % 2]
-        _, rewards = run_episode(
-            agent1, agent2, env, keep_states=True, for_evaluation=True
-        )
-        n_wins += rewards[i % 2][-1] == constants.WINNER_REWARD  # does not count draws
-    return n_wins / n_runs
 
 
 def make_opponent(agent: DeepVAgent):
@@ -102,13 +70,18 @@ def train_against_self(
     config_path = os.path.join(path_to_save, "config.json")
     agent_path = os.path.join(path_to_save, "agent.pt")
 
-    period_change_opponent = (n_episodes // num_opponents) + 1
+    period_change_opponent = (n_episodes // (num_opponents * num_workers)) + 1
+    interval_test = interval_test // num_workers
+    checkpoint_interval = checkpoint_interval // num_workers
 
-    iterable = []
-    for _ in range(num_workers):
-        new_env = ConnectFourGymEnv()
-        new_agent = agent.duplicate()
-        iterable.append((new_agent, new_env, False))
+    if num_workers > 1:
+        iterable = []
+        for _ in range(num_workers):
+            new_env = ConnectFourGymEnv()
+            new_agent = agent.duplicate()
+            iterable.append((new_agent, new_env, False))
+        pool = multiprocessing.Pool()
+
     architecture = list(map(str, next(agent.value_network.children())))
 
     config = {
@@ -118,8 +91,6 @@ def train_against_self(
         "value_network": architecture,
         "learning_rate": agent.learning_rate,
     }
-
-    pool = multiprocessing.Pool()
 
     for i in tqdm(range(n_episodes // num_workers)):
         if i > 0 and i % period_change_opponent == 0:
@@ -132,18 +103,23 @@ def train_against_self(
             if i > 0:
                 plot_win_rates(win_rates, losses, interval_test, progress_path)
 
-        outputs = pool.starmap(run_episode_against_self, iterable=iterable)
+        if num_workers == 1:
+            p1_states, p2_states, p1_rewards, p2_rewards = run_episode_against_self(
+                agent, env
+            )
+        else:
+            outputs = pool.starmap(run_episode_against_self, iterable=iterable)
 
-        p1_states = []
-        p2_states = []
-        p1_rewards = []
-        p2_rewards = []
+            p1_states = []
+            p2_states = []
+            p1_rewards = []
+            p2_rewards = []
 
-        for output in outputs:
-            p1_states += output[0]
-            p2_states += output[1]
-            p1_rewards += output[2]
-            p2_rewards += output[3]
+            for output in outputs:
+                p1_states += output[0]
+                p2_states += output[1]
+                p1_rewards += output[2]
+                p2_rewards += output[3]
 
         p1_gains = compute_gain_from_rewards(p1_rewards, discount)
         p2_gains = compute_gain_from_rewards(p2_rewards, discount)
