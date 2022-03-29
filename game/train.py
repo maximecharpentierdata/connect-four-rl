@@ -18,10 +18,10 @@ import pandas as pd
 def compute_gain_from_rewards(rewards: List[int], discount: float = 1.0) -> np.ndarray:
     gains = []
     for step in range(len(rewards)):
-        dicounted_rewards = [
+        discounted_rewards = [
             rewards[i] * discount ** (i - step) for i in range(step, len(rewards))
         ]
-        gains.append(np.sum(dicounted_rewards))
+        gains.append(np.sum(discounted_rewards))
     return np.array(gains)
 
 
