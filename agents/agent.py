@@ -5,9 +5,15 @@ import numpy as np
 
 
 class Agent(ABC):
-    def __init__(self, player_number: int, board_shape: Tuple[int, int] = (6, 7)):
+    def __init__(
+        self,
+        player_number: int,
+        board_shape: Tuple[int, int] = (6, 7),
+        stochastic: bool = False,
+    ):
         self.player_number = player_number
         self.board_shape = board_shape
+        self.stochastic = stochastic
 
     @abstractmethod
     def get_move(

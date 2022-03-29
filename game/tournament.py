@@ -20,10 +20,16 @@ def make_tournament(agents, env, agents_names=None):
         for agent2_idx, agent2 in enumerate(agents):
             if agent1_idx == agent2_idx:
                 continue
+            agent1_old_stochastic = agent1.stochastic
+            agent2_old_stochastic = agent2.stochastic
+            agent1.stochastic = False
+            agent2.stochastic = False
             result = run_episode(
                 agent1, agent2, env, keep_states=False, for_evaluation=True
             )
             results[agent1_idx][agent2_idx] = result
+            agent1.stochastic = agent1_old_stochastic
+            agent2.stochastic = agent2_old_stochastic
 
     wins_and_losses = []
     results = np.asarray(results)

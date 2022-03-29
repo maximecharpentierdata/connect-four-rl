@@ -50,7 +50,9 @@ class DeepVAgent(Agent):
         stochastic: bool = False,
         learning_rate: float = 0.001,
     ):
-        super().__init__(player_number=player_number, board_shape=board_shape)
+        super().__init__(
+            player_number=player_number, board_shape=board_shape, stochastic=stochastic
+        )
         self.value_network = ValueNetwork(board_shape, n_channels)
         self.random = np.random.default_rng(seed)
         self.loss = nn.MSELoss()
