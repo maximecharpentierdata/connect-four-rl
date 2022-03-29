@@ -1,5 +1,5 @@
 # connect-four-rl
-Reinforcement Learning the for Connect Four game.
+Reinforcement Learning for the Connect Four game.
 
 The code related to training the agents and generating episodes is situated in `src/game`. The environment is coded in `src/connect_four_env` and the agents are in `src/agents`.
 
@@ -17,6 +17,6 @@ To train an agent you can use the `Train an agent.ipynb` notebook we provided, o
 
 ## Playing against an agent
 
-If you feel like playing an against an agent you trained, feel free to do so using the `Play with an agent.ipynb` notebook. Please note that it does work in the VS Code notebook renderer.
+If you feel like playing against an agent you trained, feel free to do so using the `Play with an agent.ipynb` notebook. Please note that it does not work in the VS Code notebook renderer.
 
 We provided an agent already trained in `models/best_agent` if you want to face this one.
